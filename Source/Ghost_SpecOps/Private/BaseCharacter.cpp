@@ -11,6 +11,15 @@ ABaseCharacter::ABaseCharacter()
 void ABaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if(IsValid(StartingWeaponClass))
+	{
+		CurrentWeapon = GetWorld()->SpawnActor<AWeapon>(StartingWeaponClass, FVector::ZeroVector, FRotator::ZeroRotator);
+		if(IsValid(CurrentWeapon))
+		{
+			CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, WeaponSocketName);
+		}
+	}
 }
 
 void ABaseCharacter::Tick(float DeltaTime)

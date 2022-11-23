@@ -16,6 +16,7 @@ public:
 
 protected:
 
+	UPROPERTY(EditDefaultsOnly)
 	UStaticMeshComponent* WeaponMesh;
 	
 	virtual void BeginPlay() override;

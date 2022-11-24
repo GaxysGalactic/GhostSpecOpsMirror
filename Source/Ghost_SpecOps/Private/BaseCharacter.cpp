@@ -8,6 +8,14 @@ ABaseCharacter::ABaseCharacter()
 
 }
 
+void ABaseCharacter::StartFire()
+{
+	if(CurrentWeapon)
+	{
+		CurrentWeapon->Fire();
+	}
+}
+
 void ABaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
@@ -17,6 +25,7 @@ void ABaseCharacter::BeginPlay()
 		CurrentWeapon = GetWorld()->SpawnActor<AWeapon>(StartingWeaponClass, FVector::ZeroVector, FRotator::ZeroRotator);
 		if(IsValid(CurrentWeapon))
 		{
+			CurrentWeapon->SetOwner(this);
 			CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, WeaponSocketName);
 		}
 	}

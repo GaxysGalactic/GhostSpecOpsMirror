@@ -24,6 +24,9 @@ public:
 	
 	UPROPERTY(BlueprintReadOnly)
 	AWeapon* CurrentWeapon;
+
+	UFUNCTION(BlueprintCallable)
+	void StartFire();
 	
 protected:
 	virtual void BeginPlay() override;

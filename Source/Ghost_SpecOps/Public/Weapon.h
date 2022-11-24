@@ -14,10 +14,21 @@ class GHOST_SPECOPS_API AWeapon : public AActor
 public:	
 	AWeapon();
 
+	void Fire();
+
 protected:
 
 	UPROPERTY(EditDefaultsOnly)
 	UStaticMeshComponent* WeaponMesh;
+
+	UPROPERTY(EditDefaultsOnly)
+	float ShootDistance;
+
+	UPROPERTY(EditDefaultsOnly)
+	float ShootDamage;
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UDamageType> DamageType;
 	
 	virtual void BeginPlay() override;
 

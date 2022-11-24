@@ -45,7 +45,15 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &APlayerCharacter::StartCrouch);
 	PlayerInputComponent->BindAction("Crouch", IE_Released, this, &APlayerCharacter::EndCrouch);
 
+	PlayerInputComponent->BindAction("Fire", IE_Released, this, &APlayerCharacter::StartFire);
+}
 
-
-
+FVector APlayerCharacter::GetPawnViewLocation() const
+{
+	if(IsValid(CameraComponent))
+	{
+		return CameraComponent->GetComponentLocation();
+	}
+	
+	return Super::GetPawnViewLocation();
 }

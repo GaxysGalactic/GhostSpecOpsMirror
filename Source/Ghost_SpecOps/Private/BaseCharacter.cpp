@@ -5,6 +5,9 @@ ABaseCharacter::ABaseCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
 	GetMovementComponent()->GetNavAgentPropertiesRef().bCanCrouch = true;
+	
+	bReplicates = true;
+	SetReplicatingMovement(true);
 
 }
 

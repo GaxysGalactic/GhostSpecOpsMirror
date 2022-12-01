@@ -25,15 +25,47 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	USpringArmComponent* SpringArmComponent;
 
+	UPROPERTY(EditDefaultsOnly)
+	float WalkSpeed;
+
+	UPROPERTY(EditDefaultsOnly)
+	float RunSpeed;
+
+	//-----------------------------------------------------------------------------------------------------------------
+	
 	void MoveForward(float AxisValue);
 
 	void MoveRight(float AxisValue);
 
-	void StartCrouch();
+	//-----------------------------------------------------------------------------------------------------------------
 
-	void EndCrouch();
-	
+	void CrouchButtonPressed();
+
+	//-----------------------------------------------------------------------------------------------------------------
+
+	void AimButtonPressed();
+	void AimButtonReleased();
+	void SetAiming(bool bInIsAiming);
+
+	//-----------------------------------------------------------------------------------------------------------------
+
+	void RunButtonPressed();
+	void  RunButtonReleased();
+	void SetRunning(bool bInIsRunning);
+
+	//-----------------------------------------------------------------------------------------------------------------
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_SetAiming(bool bInIsAiming);//rpc
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_SetRunning(bool bInIsRunning);
+
+	//-----------------------------------------------------------------------------------------------------------------
+
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	//-----------------------------------------------------------------------------------------------------------------
 
 	virtual FVector GetPawnViewLocation() const override;
 	

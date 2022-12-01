@@ -29,16 +29,21 @@ public:
 	void StartFire();
 	
 protected:
+	
+	UPROPERTY(BlueprintReadOnly, Replicated, VisibleAnywhere)
+	bool bIsAiming;
+
+	UPROPERTY(BlueprintReadOnly, Replicated, VisibleAnywhere)
+	bool bIsRunning;
+
+	UPROPERTY(BlueprintReadWrite, Replicated)
+	float CharacterPitch;
+	
 	virtual void BeginPlay() override;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	bool bCrouchButton;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	bool bJumpButton;
-
 
 public:	
 	virtual void Tick(float DeltaTime) override;
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 };

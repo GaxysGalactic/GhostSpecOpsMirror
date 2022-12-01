@@ -1,10 +1,11 @@
 #include "BaseCharacter.h"
 #include "GameFramework/PawnMovementComponent.h"
+#include "Net/UnrealNetwork.h"
 
 ABaseCharacter::ABaseCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
-	GetMovementComponent()->GetNavAgentPropertiesRef().bCanCrouch = true;
+	ACharacter::GetMovementComponent()->GetNavAgentPropertiesRef().bCanCrouch = true;
 	
 	bReplicates = true;
 	SetReplicatingMovement(true);
@@ -37,6 +38,15 @@ void ABaseCharacter::BeginPlay()
 void ABaseCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+}
+
+void ABaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ABaseCharacter, bIsAiming)
+	DOREPLIFETIME(ABaseCharacter, CharacterPitch)
 
 }
 

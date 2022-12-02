@@ -21,9 +21,12 @@ public:
 protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool IsFrightened;
+	bool bIsFrightened;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool IsEssential;
+	bool bIsEssential;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bIsDead;
 	
 };

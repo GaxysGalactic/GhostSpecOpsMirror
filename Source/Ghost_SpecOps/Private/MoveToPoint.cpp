@@ -17,6 +17,7 @@ EStateTreeRunStatus UMoveToPoint::EnterState(FStateTreeExecutionContext& Context
 			if(Controller)
 			{
 				const FPathFollowingRequestResult RequestResult = Controller->MoveTo(TargetLocation);
+				bIsMoving = true;
 
 				Controller->ReceiveMoveCompleted.AddDynamic(this, &UMoveToPoint::FinishMovement);
 			}

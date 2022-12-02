@@ -4,7 +4,8 @@
 #include "CivilianCharacter.h"
 
 ACivilianCharacter::ACivilianCharacter() :
-	IsFrightened(false),
-	IsEssential(false)
+	bIsFrightened(false),
+	bIsEssential(false),
+	bIsDead(false)
 {
 }

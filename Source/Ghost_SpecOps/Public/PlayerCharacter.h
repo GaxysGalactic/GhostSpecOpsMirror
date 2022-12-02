@@ -19,18 +19,24 @@ class GHOST_SPECOPS_API APlayerCharacter : public ABaseCharacter
 
 protected:
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Camera)
 	UCameraComponent* CameraComponent;
 	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Camera)
 	USpringArmComponent* SpringArmComponent;
 
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	float WalkSpeed;
 
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	float RunSpeed;
+	
+	UPROPERTY(BlueprintReadWrite, Replicated, VisibleAnywhere)
+	bool bIsProne;
 
+	UPROPERTY(BlueprintReadWrite, Replicated, VisibleAnywhere)
+	bool bIsStanding;
+	
 	//-----------------------------------------------------------------------------------------------------------------
 	
 	void MoveForward(float AxisValue);
@@ -41,6 +47,8 @@ protected:
 
 	void CrouchButtonPressed();
 
+	void ProneButtonPressed();
+
 	//-----------------------------------------------------------------------------------------------------------------
 
 	void AimButtonPressed();
@@ -50,7 +58,7 @@ protected:
 	//-----------------------------------------------------------------------------------------------------------------
 
 	void RunButtonPressed();
-	void  RunButtonReleased();
+	void RunButtonReleased();
 	void SetRunning(bool bInIsRunning);
 
 	//-----------------------------------------------------------------------------------------------------------------
@@ -64,6 +72,8 @@ protected:
 	//-----------------------------------------------------------------------------------------------------------------
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	//-----------------------------------------------------------------------------------------------------------------
 

@@ -20,12 +20,15 @@ public:
 
 protected:
 
+	/** Used for the "Cower" state / animation */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bIsFrightened;
 
+	/** Indicates if being alive is essential to mission success. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bIsEssential;
 
+	/** Used for death state */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bIsDead;
 	

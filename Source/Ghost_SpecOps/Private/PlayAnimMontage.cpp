@@ -21,11 +21,7 @@ EStateTreeRunStatus UPlayAnimMontage::EnterState(FStateTreeExecutionContext& Con
 
 EStateTreeRunStatus UPlayAnimMontage::Tick(FStateTreeExecutionContext& Context, const float DeltaTime)
 {
-	if(bIsRunning)
-	{
-		return EStateTreeRunStatus::Running;
-	}
-	return EStateTreeRunStatus::Succeeded;
+	return bIsRunning ? EStateTreeRunStatus::Running : EStateTreeRunStatus::Succeeded;
 }
 
 void UPlayAnimMontage::EndState()

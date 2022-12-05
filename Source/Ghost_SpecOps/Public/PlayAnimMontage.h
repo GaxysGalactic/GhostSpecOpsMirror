@@ -21,15 +21,20 @@ class GHOST_SPECOPS_API UPlayAnimMontage : public UStateTreeTaskBlueprintBase
 	void EndState();
 
 protected:
-	
+
+	/** Actor that the State Tree is attached to.
+		This task requires it to be a character for it to work properly. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Context")
 	AActor* Actor;
 
+	/** Animation Montage passed in as Input */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Input")
 	class UAnimMontage* AnimMontage;
-	
+
+	/** Timer for the animation length */
 	FTimerHandle AnimationTimer;
 
+	/** Task Running? */
 	bool bIsRunning;
 	
 };

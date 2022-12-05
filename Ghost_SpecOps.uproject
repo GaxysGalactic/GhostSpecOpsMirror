@@ -9,7 +9,9 @@
 			"Type": "Runtime",
 			"LoadingPhase": "Default",
 			"AdditionalDependencies": [
-				"Engine"
+				"Engine",
+				"AIModule",
+				"StateTreeModule"
 			]
 		}
 	],
@@ -20,6 +22,26 @@
 			"TargetAllowList": [
 				"Editor"
 			]
+		},
+		{
+			"Name": "StateTree",
+			"Enabled": true
+		},
+		{
+			"Name": "GameplayStateTree",
+			"Enabled": true
+		},
+		{
+			"Name": "GameplayBehaviors",
+			"Enabled": true
+		},
+		{
+			"Name": "SmartObjects",
+			"Enabled": true
+		},
+		{
+			"Name": "GameplayBehaviorSmartObjects",
+			"Enabled": true
 		}
 	]
 }

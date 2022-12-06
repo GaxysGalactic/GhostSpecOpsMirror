@@ -1,6 +1,7 @@
 #include "PlayerCharacter.h"
 
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "Net/UnrealNetwork.h"
 
 APlayerCharacter::APlayerCharacter()
@@ -9,8 +10,10 @@ APlayerCharacter::APlayerCharacter()
 	bIsRunning = false;
 	bIsCrouched = false;
 
-	WalkSpeed = 600.f;
 	RunSpeed = 900.f;
+	WalkSpeed = 600.f;
+	AimWalkSpeed = 400.f;
+	ProneSpeed = 100.f;
 
 	SpringArmComponent = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
 	SpringArmComponent->SetupAttachment(GetMesh());
@@ -36,18 +39,25 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	PlayerInputComponent->BindAxis("LookUp", this, &APlayerCharacter::AddControllerPitchInput);
 	PlayerInputComponent->BindAxis("Turn", this, &APlayerCharacter::AddControllerYawInput);
 
-	PlayerInputComponent->BindAction("Run", IE_Pressed, this, &APlayerCharacter::RunButtonPressed);
-	PlayerInputComponent->BindAction("Run", IE_Released, this, &APlayerCharacter::RunButtonReleased);
+	PlayerInputComponent->BindAction("Run", IE_Pressed, this, &APlayerCharacter::OnRunButtonPressed);
+	PlayerInputComponent->BindAction("Run", IE_Released, this, &APlayerCharacter::OnRunButtonReleased);
 
-	PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &APlayerCharacter::CrouchButtonPressed);
+	PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &APlayerCharacter::OnCrouchButtonPressed);
 
 	PlayerInputComponent->BindAction("Fire", IE_Released, this, &APlayerCharacter::StartFire);
 
-	PlayerInputComponent->BindAction("Aim", IE_Pressed, this, &APlayerCharacter::AimButtonPressed);
-	PlayerInputComponent->BindAction("Aim", IE_Released, this, &APlayerCharacter::AimButtonReleased);
+	PlayerInputComponent->BindAction("Aim", IE_Pressed, this, &APlayerCharacter::OnAimButtonPressed);
+	PlayerInputComponent->BindAction("Aim", IE_Released, this, &APlayerCharacter::OnAimButtonReleased);
 
-	// PlayerInputComponent->BindAction("Prone", IE_Pressed, this, &APlayerCharacter::ProneButtonPressed);
+	PlayerInputComponent->BindAction("Prone", IE_Pressed, this, &APlayerCharacter::OnProneButtonPressed);
 
+}
+
+void APlayerCharacter::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+
+	CalculateAimOffset(DeltaSeconds);
 }
 
 void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -59,6 +69,30 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 }
 
 //-------------------------------------------- Movement ---------------------------------------------------------------
+
+void APlayerCharacter::CalculateAimOffset(float DeltaTime)
+{
+	FVector Velocity = GetVelocity();
+	Velocity.Z = 0.f;
+	Speed = Velocity.Size();
+	
+	if(Speed == 0.f)
+	{
+		FRotator CurrentAimRotation = FRotator(0.f, GetBaseAimRotation().Yaw, 0.f);
+		FRotator DeltaAimRotation = UKismetMathLibrary::NormalizedDeltaRotator(CurrentAimRotation, StartingAimRotation);
+		// AO_Yaw = FMath::RInterpTo(FRotator(0.f, AO_Yaw, 0.f), DeltaAimRotation, DeltaTime, 15.f).Yaw;
+		AO_Yaw = DeltaAimRotation.Yaw;
+		bUseControllerRotationYaw = false;
+	}
+	if(Speed > 0.f)
+	{
+		StartingAimRotation = FRotator(0.f, GetBaseAimRotation().Yaw, 0.f);
+		AO_Yaw = 0.f;
+		bUseControllerRotationYaw = true;
+	}
+
+	AO_Pitch = GetBaseAimRotation().Pitch;
+}
 
 void APlayerCharacter::MoveForward(float AxisValue)
 {
@@ -81,9 +115,9 @@ void APlayerCharacter::MoveRight(float AxisValue)
 	}
 }
 
-//-------------------------------------------- Crouch ---------------------------------------------------------------
+//---------------------------------------------- Crouch ---------------------------------------------------------------
 
-void APlayerCharacter::CrouchButtonPressed()
+void APlayerCharacter::OnCrouchButtonPressed()
 {
 	if(bIsCrouched)
 	{
@@ -95,28 +129,71 @@ void APlayerCharacter::CrouchButtonPressed()
 	}
 }
 
-void APlayerCharacter::ProneButtonPressed()
+//---------------------------------------------- Prone ---------------------------------------------------------------
+
+void APlayerCharacter::OnProneButtonPressed()
 {
-	// if(bIsProne)
-	// {
-	// 	bIsProne = false;
-	// 	bIsStanding = true;
-	// }
-	// else
-	// {
-	// 	bIsProne = true;
-	// 	bIsStanding = true;
-	// }
+	if (bIsProne)
+	{
+		bIsProne = false;
+		bIsStanding = true;
+
+		GetCharacterMovement()->MaxWalkSpeed = 0.0f;
+
+		//"delay"
+		FTimerDelegate TimerCallback;
+		TimerCallback.BindLambda([&]
+		{
+			GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+		});
+
+		FTimerHandle Handle;
+		GetWorld()->GetTimerManager().SetTimer(Handle, TimerCallback, 1.3f, false);
+
+	}
+	else
+	{
+		bIsProne = true;
+		bIsStanding = false;
+
+		GetCharacterMovement()->MaxWalkSpeed = 0.0f;
+
+		//"delay"
+		FTimerDelegate TimerCallback;
+		TimerCallback.BindLambda([&]
+		{
+			GetCharacterMovement()->MaxWalkSpeed = ProneSpeed;
+		});
+
+		FTimerHandle Handle;
+		GetWorld()->GetTimerManager().SetTimer(Handle, TimerCallback, 1.3f, false);
+
+	}
+	
+	if(!HasAuthority())
+	{
+		Server_OnProneButtonPressed();
+	}
 }
 
-//-------------------------------------------- Aim ---------------------------------------------------------------
+void APlayerCharacter::Server_OnProneButtonPressed_Implementation()
+{
+	OnProneButtonPressed();
+}
 
-void APlayerCharacter::AimButtonPressed()
+bool APlayerCharacter::Server_OnProneButtonPressed_Validate()
+{
+	return true;
+}
+
+//----------------------------------------------- Aim -----------------------------------------------------------------
+
+void APlayerCharacter::OnAimButtonPressed()
 {
 	SetAiming(true);
 }
 
-void APlayerCharacter::AimButtonReleased()
+void APlayerCharacter::OnAimButtonReleased()
 {
 	SetAiming(false);
 }
@@ -124,19 +201,20 @@ void APlayerCharacter::AimButtonReleased()
 void APlayerCharacter::SetAiming(bool bInIsAiming)
 {
 	bIsAiming = bInIsAiming;
-	Server_SetAiming(bInIsAiming);// ojo no llamar al _Implemantation
+	Server_SetAiming(bInIsAiming);
+	GetCharacterMovement()->MaxWalkSpeed = bIsAiming ? AimWalkSpeed : WalkSpeed;
 }
 
-//-------------------------------------------- Run ---------------------------------------------------------------
+//----------------------------------------------- Run -----------------------------------------------------------------
 
-void APlayerCharacter::RunButtonPressed()
+void APlayerCharacter::OnRunButtonPressed()
 {
 	SetRunning(true);
 	GetCharacterMovement()->MaxWalkSpeed = RunSpeed;
 
 }
 
-void APlayerCharacter::RunButtonReleased()
+void APlayerCharacter::OnRunButtonReleased()
 {
 	SetRunning(false);
 	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
@@ -148,7 +226,7 @@ void APlayerCharacter::SetRunning(bool bInIsRunning)
 	Server_SetRunning(bInIsRunning);
 }
 
-
+//---------------------------------------------------------------------------------------------------------------------
 
 FVector APlayerCharacter::GetPawnViewLocation() const
 {
@@ -165,6 +243,7 @@ FVector APlayerCharacter::GetPawnViewLocation() const
 void APlayerCharacter::Server_SetAiming_Implementation(bool bInIsAiming)
 {
 	bIsAiming = bInIsAiming;
+	GetCharacterMovement()->MaxWalkSpeed = bIsAiming ? AimWalkSpeed : WalkSpeed;
 }
 
 void APlayerCharacter::Server_SetRunning_Implementation(bool bInIsRunning)
@@ -172,8 +251,9 @@ void APlayerCharacter::Server_SetRunning_Implementation(bool bInIsRunning)
 	bIsRunning = bInIsRunning;
 }
 
+
+
 //------------------------------------ Server validates ---------------------------------------------------------------
-//checks for hacks xd <- if return false, 
 
 bool APlayerCharacter::Server_SetAiming_Validate(bool bInIsAiming)
 {
@@ -184,3 +264,4 @@ bool APlayerCharacter::Server_SetRunning_Validate(bool bInIsrunning)
 {
 	return true;
 }
+

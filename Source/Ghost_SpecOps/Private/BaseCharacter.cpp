@@ -48,9 +48,6 @@ void ABaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 	DOREPLIFETIME(ABaseCharacter, bIsAiming)
 	DOREPLIFETIME(ABaseCharacter, bIsRunning)
 	DOREPLIFETIME(ABaseCharacter, CharacterPitch)
-
-
-
 }
 
 

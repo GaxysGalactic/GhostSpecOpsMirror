@@ -80,7 +80,6 @@ void APlayerCharacter::CalculateAimOffset(float DeltaTime)
 	{
 		FRotator CurrentAimRotation = FRotator(0.f, GetBaseAimRotation().Yaw, 0.f);
 		FRotator DeltaAimRotation = UKismetMathLibrary::NormalizedDeltaRotator(CurrentAimRotation, StartingAimRotation);
-		// AO_Yaw = FMath::RInterpTo(FRotator(0.f, AO_Yaw, 0.f), DeltaAimRotation, DeltaTime, 15.f).Yaw;
 		AO_Yaw = DeltaAimRotation.Yaw;
 		bUseControllerRotationYaw = false;
 	}
@@ -92,6 +91,13 @@ void APlayerCharacter::CalculateAimOffset(float DeltaTime)
 	}
 
 	AO_Pitch = GetBaseAimRotation().Pitch;
+	if(AO_Pitch >= 90.f && !IsLocallyControlled())
+	{
+		//Map pitch from [270, 360) to [-90, 0)
+		FVector2d InRage(270.f, 360.f);
+		FVector2d OutRange(-90.f, 0.f);
+		AO_Pitch = FMath::GetMappedRangeValueClamped(InRage, OutRange, AO_Pitch);
+	}
 }
 
 void APlayerCharacter::MoveForward(float AxisValue)
@@ -102,7 +108,6 @@ void APlayerCharacter::MoveForward(float AxisValue)
 		const FVector Direction(FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X));
 		AddMovementInput(Direction, AxisValue);
 	}
-	// AddMovementInput(GetActorForwardVector() * AxisValue);
 }
 
 void APlayerCharacter::MoveRight(float AxisValue)

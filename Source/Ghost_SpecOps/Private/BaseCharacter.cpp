@@ -4,6 +4,10 @@
 
 ABaseCharacter::ABaseCharacter()
 {
+	bIsAiming = false;
+	bIsRunning = false;
+	bIsCrouched = false;
+	
 	PrimaryActorTick.bCanEverTick = true;
 	ACharacter::GetMovementComponent()->GetNavAgentPropertiesRef().bCanCrouch = true;
 	
@@ -47,7 +51,6 @@ void ABaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 
 	DOREPLIFETIME(ABaseCharacter, bIsAiming)
 	DOREPLIFETIME(ABaseCharacter, bIsRunning)
-	DOREPLIFETIME(ABaseCharacter, CharacterPitch)
 }
 
 

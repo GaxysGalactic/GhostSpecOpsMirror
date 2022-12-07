@@ -38,18 +38,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	float AimWalkSpeed;
-	
-	UPROPERTY(BlueprintReadWrite, Replicated, VisibleAnywhere)
-	bool bIsProne;
 
-	UPROPERTY(BlueprintReadWrite, Replicated, VisibleAnywhere)
-	bool bIsStanding;
 
-	//AimOffset
-	UPROPERTY(BlueprintReadOnly)
-	float AO_Pitch;
-	UPROPERTY(BlueprintReadOnly)
-	float AO_Yaw;
+	//------------------------------------- Functions -----------------------------------------------------------------
 	FRotator StartingAimRotation;
 
 	void CalculateAimOffset(float DeltaTime);

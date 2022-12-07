@@ -34,8 +34,18 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Replicated, VisibleAnywhere)
 	bool bIsRunning;
 
-	UPROPERTY(BlueprintReadWrite, Replicated)
-	float CharacterPitch;
+	UPROPERTY(BlueprintReadWrite, Replicated, VisibleAnywhere)
+	bool bIsProne;
+
+	UPROPERTY(BlueprintReadWrite, Replicated, VisibleAnywhere)
+	bool bIsStanding;
+
+	//AimOffset
+	UPROPERTY(BlueprintReadOnly)
+	float AO_Pitch;
+	
+	UPROPERTY(BlueprintReadOnly)
+	float AO_Yaw;
 	
 	virtual void BeginPlay() override;
 

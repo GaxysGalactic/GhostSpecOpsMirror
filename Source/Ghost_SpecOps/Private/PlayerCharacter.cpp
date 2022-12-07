@@ -6,10 +6,6 @@
 
 APlayerCharacter::APlayerCharacter()
 {
-	bIsAiming = false;
-	bIsRunning = false;
-	bIsCrouched = false;
-
 	RunSpeed = 900.f;
 	WalkSpeed = 600.f;
 	AimWalkSpeed = 400.f;
@@ -124,13 +120,16 @@ void APlayerCharacter::MoveRight(float AxisValue)
 
 void APlayerCharacter::OnCrouchButtonPressed()
 {
-	if(bIsCrouched)
+	if(!bIsProne)
 	{
-		UnCrouch();
-	}
-	else
-	{
-		Crouch();
+		if(bIsCrouched)
+		{
+			UnCrouch();
+		}
+		else
+		{
+			Crouch();
+		}		
 	}
 }
 

@@ -210,20 +210,28 @@ void APlayerCharacter::SetAiming(bool bInIsAiming)
 void APlayerCharacter::OnRunButtonPressed()
 {
 	SetRunning(true);
-	GetCharacterMovement()->MaxWalkSpeed = RunSpeed;
-
 }
 
 void APlayerCharacter::OnRunButtonReleased()
 {
 	SetRunning(false);
-	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
 }
 
 void APlayerCharacter::SetRunning(bool bInIsRunning)
 {
-	bIsRunning = bInIsRunning;
-	Server_SetRunning(bInIsRunning);
+	if (!bIsProne || bIsCrouched)
+	{
+		bIsRunning = bInIsRunning;
+		if (bIsRunning)
+		{
+			GetCharacterMovement()->MaxWalkSpeed = RunSpeed;
+		}
+		else
+		{
+			GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+		}
+		Server_SetRunning(bInIsRunning);
+	}
 }
 
 //---------------------------------------------------------------------------------------------------------------------

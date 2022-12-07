@@ -18,6 +18,12 @@ public:
 
 	ACivilianCharacter();
 
+private:
+
+	virtual void BeginPlay() override;
+
+	void SwitchSchedule();
+
 protected:
 
 	/** Used for the "Cower" state / animation */
@@ -31,5 +37,12 @@ protected:
 	/** Used for death state */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bIsDead;
+
+	/** Indicates if the civilian should try to use a computer at their earliest possible convenience */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bUseComputer;
+
+	/** Timer for switching between computer / roam desires */
+	FTimerHandle ScheduleTimer;
 	
 };

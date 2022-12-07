@@ -44,6 +44,7 @@ void UMoveToPoint::ExitState(FStateTreeExecutionContext& Context, const FStateTr
 		if(Controller)
 		{
 			Controller->ReceiveMoveCompleted.RemoveDynamic(this, &UMoveToPoint::FinishMovement);
+			Controller->StopMovement();
 		}
 	}
 	

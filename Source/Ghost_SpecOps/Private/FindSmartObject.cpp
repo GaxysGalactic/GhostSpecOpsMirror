@@ -8,10 +8,15 @@ EStateTreeRunStatus UFindSmartObject::EnterState(FStateTreeExecutionContext& Con
 	const FStateTreeTransitionResult& Transition)
 {
 
-	FBox SearchArea(Actor->GetActorLocation() + SearchRadius, Actor->GetActorLocation() - SearchRadius);
+	FBox SearchArea(Actor->GetActorLocation() - SearchRadius, Actor->GetActorLocation() + SearchRadius);
 	
 	FSmartObjectRequestFilter Filter;
-	Filter.UserTags.AddTag(SmartObjectTag);
+
+	FGameplayTagQueryExpression Expression;
+	Expression.AnyTagsMatch();
+	Expression.AddTag(SmartObjectTag);
+	
+	Filter.ActivityRequirements.Build(Expression);
 	
 	FSmartObjectRequest Request(SearchArea, Filter);
 	
@@ -19,10 +24,15 @@ EStateTreeRunStatus UFindSmartObject::EnterState(FStateTreeExecutionContext& Con
 
 	if(Result.IsValid())
 	{
-		SmartObjectClaimHandle = GetWorld()->GetSubsystem<USmartObjectSubsystem>()->Claim(Result.SmartObjectHandle, Result.SlotHandle);
-		UE_LOG(LogTemp, Warning, TEXT("Testing"));
+		SmartObjectClaimHandle = GetWorld()->GetSubsystem<USmartObjectSubsystem>()->Claim(
+		Result.SmartObjectHandle, Result.SlotHandle);
+
+		SmartObjectLocation = GetWorld()->GetSubsystem<USmartObjectSubsystem>()->GetSlotLocation(SmartObjectClaimHandle).GetValue();
+	
+		UE_LOG(LogTemp, Warning, TEXT("Claim success"));
 		return EStateTreeRunStatus::Running;
 	}
+	UE_LOG(LogTemp, Warning, TEXT("Claim failed."));
 	return EStateTreeRunStatus::Failed;
 }
 

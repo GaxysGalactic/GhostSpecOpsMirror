@@ -37,5 +37,9 @@ protected:
 	/** Claim handle for the Smart Object. This will be released upon exiting state. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Output")
 	FSmartObjectClaimHandle SmartObjectClaimHandle;
+
+	/** Location for the Smart Object */
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Output")
+	FVector SmartObjectLocation;
 	
 };

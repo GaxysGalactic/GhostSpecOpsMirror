@@ -2,6 +2,7 @@
 #include "CoreMinimal.h"
 #include "Weapon.h"
 #include "GameFramework/Character.h"
+#include "Ghost_SpecOps/Types/TurningInPlace.h"
 #include "BaseCharacter.generated.h"
 
 class AWeapon;
@@ -46,6 +47,8 @@ protected:
 	
 	UPROPERTY(BlueprintReadOnly)
 	float AO_Yaw;
+
+	ETurningInPlace TurningInPlace;
 	
 	virtual void BeginPlay() override;
 
@@ -53,5 +56,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	FORCEINLINE ETurningInPlace GetTurningInPlace() const { return TurningInPlace;}
 
 };

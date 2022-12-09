@@ -44,6 +44,8 @@ protected:
 	FRotator StartingAimRotation;
 
 	void CalculateAimOffset(float DeltaTime);
+
+	void TurnInPlace(float DeltaTime);
 	
 	//-----------------------------------------------------------------------------------------------------------------
 	

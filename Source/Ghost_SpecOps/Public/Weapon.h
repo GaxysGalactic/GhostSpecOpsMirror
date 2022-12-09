@@ -32,6 +32,11 @@ protected:
 	
 	virtual void BeginPlay() override;
 
-public:	
+public:
+	
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE UStaticMeshComponent* GetWeaponMesh() const { return WeaponMesh; }
+
+	// FTransform GetSocketTransform() { return WeaponMesh->GetSocketTransform(TEXT("LeftHandSocket"));}
 
 };

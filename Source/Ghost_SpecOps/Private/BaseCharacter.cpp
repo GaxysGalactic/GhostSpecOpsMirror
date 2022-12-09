@@ -14,6 +14,8 @@ ABaseCharacter::ABaseCharacter()
 	bReplicates = true;
 	SetReplicatingMovement(true);
 
+	TurningInPlace = ETurningInPlace::ETIP_NotTurning;
+
 }
 
 void ABaseCharacter::StartFire()

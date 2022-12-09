@@ -11,6 +11,8 @@ EStateTreeRunStatus UUseSmartObject::EnterState(FStateTreeExecutionContext& Cont
                                                 const FStateTreeTransitionResult& Transition)
 {
 	GetWorld()->GetSubsystem<USmartObjectSubsystem>()->Use<USmartObjectBehaviorDefinition>(SmartObjectClaimHandle);
+
+	
 	
 	return Super::EnterState(Context, Transition);
 }

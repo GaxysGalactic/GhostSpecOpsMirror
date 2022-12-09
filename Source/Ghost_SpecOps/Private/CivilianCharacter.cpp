@@ -14,7 +14,7 @@ ACivilianCharacter::ACivilianCharacter() :
 
 void ACivilianCharacter::BeginPlay()
 {
-	GetWorldTimerManager().SetTimer(ScheduleTimer, this, &ACivilianCharacter::SwitchSchedule, 30.f, true);
+	GetWorldTimerManager().SetTimer(ScheduleTimer, this, &ACivilianCharacter::SwitchSchedule, 15.f, true);
 	Super::BeginPlay();
 }
 

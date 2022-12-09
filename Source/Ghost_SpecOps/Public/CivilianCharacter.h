@@ -22,6 +22,7 @@ private:
 
 	virtual void BeginPlay() override;
 
+	/** Switches the "desire" of the civilian to use a computer on their next State Tree runthrough, based on a timer */
 	void SwitchSchedule();
 
 protected:
@@ -41,8 +42,9 @@ protected:
 	/** Indicates if the civilian should try to use a computer at their earliest possible convenience */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bUseComputer;
-
+	
 	/** Timer for switching between computer / roam desires */
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	FTimerHandle ScheduleTimer;
 	
 };

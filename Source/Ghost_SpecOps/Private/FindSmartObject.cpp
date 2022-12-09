@@ -7,7 +7,8 @@
 EStateTreeRunStatus UFindSmartObject::EnterState(FStateTreeExecutionContext& Context,
 	const FStateTreeTransitionResult& Transition)
 {
-
+	bShouldStateChangeOnReselect = false;
+		
 	FBox SearchArea(Actor->GetActorLocation() - SearchRadius, Actor->GetActorLocation() + SearchRadius);
 	
 	FSmartObjectRequestFilter Filter;
@@ -40,7 +41,7 @@ void UFindSmartObject::ExitState(FStateTreeExecutionContext& Context, const FSta
 {
 	if(SmartObjectClaimHandle.IsValid())
 	{
-		GetWorld()->GetSubsystem<USmartObjectSubsystem>()->Release(SmartObjectClaimHandle);
+		//GetWorld()->GetSubsystem<USmartObjectSubsystem>()->Release(SmartObjectClaimHandle);
 	}
 	Super::ExitState(Context, Transition);
 }

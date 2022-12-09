@@ -34,7 +34,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Input")
 	FGameplayTag SmartObjectTag;
 
-	/** Claim handle for the Smart Object. This will be released upon exiting state. */
+	/** Claim handle for the Smart Object. This will be released upon state end if unused. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Output")
 	FSmartObjectClaimHandle SmartObjectClaimHandle;
 

@@ -12,7 +12,8 @@ EStateTreeRunStatus UUseSmartObject::EnterState(FStateTreeExecutionContext& Cont
 {
 	GetWorld()->GetSubsystem<USmartObjectSubsystem>()->Use<USmartObjectBehaviorDefinition>(SmartObjectClaimHandle);
 
-	
+	// Smart Object logic goes here...
+	// Unfortunately, USmartObjectGameplayBehaviorDefinition could not be found. This task has been rewritten using blueprints instead.
 	
 	return Super::EnterState(Context, Transition);
 }

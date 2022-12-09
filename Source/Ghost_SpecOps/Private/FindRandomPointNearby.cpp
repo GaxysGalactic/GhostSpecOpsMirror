@@ -31,7 +31,7 @@ EStateTreeRunStatus UFindRandomPointNearby::EnterState(FStateTreeExecutionContex
 			RandomLocation = RandomPoint.Location;
 
 			//Draw debug sphere
-			DrawDebugSphere(GetWorld(), RandomLocation, 50.f, 1, FColor::Red, false, 10.f);
+			//DrawDebugSphere(GetWorld(), RandomLocation, 50.f, 1, FColor::Red, false, 10.f);
 
 			if(bResult)
 			{

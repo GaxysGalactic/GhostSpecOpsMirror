@@ -11,6 +11,7 @@ EStateTreeRunStatus UPlayAnimMontage::EnterState(FStateTreeExecutionContext& Con
 	ACharacter* Character = Cast<ACharacter>(Actor);
 	if(Character)
 	{
+		// Set a timer to end the state once animation has finished
 		float AnimationTime = Character->PlayAnimMontage(AnimMontage);
 
 		if(AnimationTime == 0.f)

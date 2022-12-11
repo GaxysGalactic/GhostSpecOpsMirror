@@ -48,6 +48,8 @@ protected:
 	UPROPERTY(BlueprintReadOnly)
 	float AO_Yaw;
 
+	float InterpAO_Yaw;
+
 	ETurningInPlace TurningInPlace;
 	
 	virtual void BeginPlay() override;

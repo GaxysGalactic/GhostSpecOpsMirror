@@ -22,6 +22,7 @@ private:
 	UPROPERTY(BlueprintReadOnly, Category = Character, meta = (AllowPrivateAccess = true))
 	ABaseCharacter* BaseCharacter;
 
+	UPROPERTY(BlueprintReadOnly, Category = Character, meta = (AllowPrivateAccess = true))
 	float Speed;
 
 	bool bIsFalling;

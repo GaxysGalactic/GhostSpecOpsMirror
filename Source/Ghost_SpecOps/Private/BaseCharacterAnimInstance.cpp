@@ -33,5 +33,5 @@ void UBaseCharacterAinmInstance::NativeUpdateAnimation(float DeltaTime)
 	bIsFalling = BaseCharacter->GetCharacterMovement()->IsFalling();
 
 	TurningInPlace = BaseCharacter->GetTurningInPlace();
-	
+
 }

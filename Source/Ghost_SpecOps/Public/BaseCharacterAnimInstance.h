@@ -26,6 +26,8 @@ private:
 	float Speed;
 
 	bool bIsFalling;
+
+	FTransform LeftHandTransform;
 	
 	UPROPERTY(BlueprintReadOnly, Category = Character, meta = (AllowPrivateAccess = true))
 	ETurningInPlace TurningInPlace;

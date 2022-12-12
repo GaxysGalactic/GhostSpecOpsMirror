@@ -20,9 +20,19 @@ public:
 
 protected:
 
+	/** Path for the enemy to follow (or guard location) */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class APatrolPath* PatrolPath;
+
+	/** Current index in patrol path */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 PatrolIndex;
+
+	/** Enemy sees player or remembers seeing them */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool CanSeePlayer;
 
+	/** Current health */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float Health;
 	

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "BaseCharacter.h"
+#include "GameplayTagContainer.h"
 #include "CivilianCharacter.generated.h"
 
 /**
@@ -18,15 +19,53 @@ public:
 
 	ACivilianCharacter();
 
+private:
+
+	virtual void BeginPlay() override;
+
+	/** Switches the "desire" of the civilian to use a computer on their next State Tree runthrough, based on a timer */
+	void SwitchSchedule();
+
 protected:
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	/** Used for the "Cower" state / animation */
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	bool bIsFrightened;
 
+	/** Indicates if being alive is essential to mission success. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bIsEssential;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	/** Used for death state */
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	bool bIsDead;
+
+	/** Indicates if the civilian should try to use a computer at their earliest possible convenience */
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	bool bUseComputer;
+	
+	/** Timer for switching between computer / roam desires */
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	FTimerHandle ScheduleTimer;
+
+	/** Schedule timer change rate. This will pause when interacting with SO. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float ScheduleTimerRate;
+
+	/** Radius for their randomized movement in roam state*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float MoveRadius;
+
+	/** Radius to outline search box for finding smart objects */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVector SearchRadius;
+
+	/** Death animation montage */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation)
+	class UAnimMontage* DeathMontage;
+
+	/** Gameplay tag container for activities civilian can use related to Smart Objects */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = SmartObjects)
+	FGameplayTagContainer SmartObjectActivities;
 	
 };

@@ -29,12 +29,16 @@ public:
 
 protected:
 
+	/** Actor that the State Tree is attached to.
+		This task requires it to be a pawn for it to work properly. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Context")
 	AActor* Actor;
 
+	/** The target location to move to, passed in as input */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Input")
 	FVector TargetLocation;
 
+	/** Is the pawn performing a move action? */
 	bool bIsMoving = false;
 	
 };

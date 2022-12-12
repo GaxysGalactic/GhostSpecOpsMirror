@@ -11,7 +11,13 @@ EStateTreeRunStatus UPlayAnimMontage::EnterState(FStateTreeExecutionContext& Con
 	ACharacter* Character = Cast<ACharacter>(Actor);
 	if(Character)
 	{
+		// Set a timer to end the state once animation has finished
 		float AnimationTime = Character->PlayAnimMontage(AnimMontage);
+
+		if(AnimationTime == 0.f)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("AnimationTime is 0"));
+		}
 
 		Character->GetWorldTimerManager().SetTimer(AnimationTimer, this, &UPlayAnimMontage::EndState, AnimationTime);
 		bIsRunning = true;
@@ -21,11 +27,7 @@ EStateTreeRunStatus UPlayAnimMontage::EnterState(FStateTreeExecutionContext& Con
 
 EStateTreeRunStatus UPlayAnimMontage::Tick(FStateTreeExecutionContext& Context, const float DeltaTime)
 {
-	if(bIsRunning)
-	{
-		return EStateTreeRunStatus::Running;
-	}
-	return EStateTreeRunStatus::Succeeded;
+	return bIsRunning ? EStateTreeRunStatus::Running : EStateTreeRunStatus::Succeeded;
 }
 
 void UPlayAnimMontage::EndState()

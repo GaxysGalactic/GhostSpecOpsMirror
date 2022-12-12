@@ -19,6 +19,8 @@ class GHOST_SPECOPS_API APlayerCharacter : public ABaseCharacter
 
 protected:
 
+	float Speed;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Camera)
 	UCameraComponent* CameraComponent;
 	
@@ -31,11 +33,19 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	float RunSpeed;
 	
-	UPROPERTY(BlueprintReadWrite, Replicated, VisibleAnywhere)
-	bool bIsProne;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	float ProneSpeed;
 
-	UPROPERTY(BlueprintReadWrite, Replicated, VisibleAnywhere)
-	bool bIsStanding;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	float AimWalkSpeed;
+
+
+	//------------------------------------- Functions -----------------------------------------------------------------
+	FRotator StartingAimRotation;
+
+	void CalculateAimOffset(float DeltaTime);
+
+	void TurnInPlace(float DeltaTime);
 	
 	//-----------------------------------------------------------------------------------------------------------------
 	
@@ -45,29 +55,32 @@ protected:
 
 	//-----------------------------------------------------------------------------------------------------------------
 
-	void CrouchButtonPressed();
+	void OnCrouchButtonPressed();
 
-	void ProneButtonPressed();
+	void OnProneButtonPressed();
 
 	//-----------------------------------------------------------------------------------------------------------------
 
-	void AimButtonPressed();
-	void AimButtonReleased();
+	void OnAimButtonPressed();
+	void OnAimButtonReleased();
 	void SetAiming(bool bInIsAiming);
 
 	//-----------------------------------------------------------------------------------------------------------------
 
-	void RunButtonPressed();
-	void RunButtonReleased();
+	void OnRunButtonPressed();
+	void OnRunButtonReleased();
 	void SetRunning(bool bInIsRunning);
 
-	//-----------------------------------------------------------------------------------------------------------------
+	//---------------------------------------------- RPC --------------------------------------------------------------
 
 	UFUNCTION(Server, Reliable, WithValidation)
-	void Server_SetAiming(bool bInIsAiming);//rpc
+	void Server_SetAiming(bool bInIsAiming);
 
 	UFUNCTION(Server, Reliable, WithValidation)
 	void Server_SetRunning(bool bInIsRunning);
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_OnProneButtonPressed();
 
 	//-----------------------------------------------------------------------------------------------------------------
 
@@ -78,5 +91,7 @@ protected:
 	//-----------------------------------------------------------------------------------------------------------------
 
 	virtual FVector GetPawnViewLocation() const override;
+
+	virtual void Tick(float DeltaSeconds) override;
 	
 };

@@ -42,7 +42,7 @@ public:
 
 protected:
 	virtual bool Initialize() override;
-	virtual void NativeDestruct() override;;
+	virtual void NativeDestruct() override;
 
 	UFUNCTION()
 	void OnCreateSessionComplete(bool bWasSuccessful);

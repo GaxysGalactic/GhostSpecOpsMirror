@@ -8,22 +8,21 @@
 EStateTreeRunStatus UMoveToPoint::EnterState(FStateTreeExecutionContext& Context,
                                              const FStateTreeTransitionResult& Transition)
 {
-	if(Actor)
+	APawn* Pawn = Cast<APawn>(Actor);
+	if(Pawn)
 	{
-		APawn* Pawn = Cast<APawn>(Actor);
-		if(Pawn)
+		AAIController* Controller = Cast<AAIController>(Pawn->GetController());
+		if(Controller)
 		{
-			AAIController* Controller = Cast<AAIController>(Pawn->GetController());
-			if(Controller)
-			{
-				const FPathFollowingRequestResult RequestResult = Controller->MoveTo(TargetLocation);
-				bIsMoving = true;
+			const FPathFollowingRequestResult RequestResult = Controller->MoveTo(TargetLocation);
+			bIsMoving = true;
 
-				Controller->ReceiveMoveCompleted.AddDynamic(this, &UMoveToPoint::FinishMovement);
-			}
+			Controller->ReceiveMoveCompleted.AddDynamic(this, &UMoveToPoint::FinishMovement);
+
+			return EStateTreeRunStatus::Running;
 		}
 	}
-	return EStateTreeRunStatus::Running;
+	return EStateTreeRunStatus::Failed;
 }
 
 void UMoveToPoint::FinishMovement(FAIRequestID RequestID, EPathFollowingResult::Type Result)
@@ -33,25 +32,19 @@ void UMoveToPoint::FinishMovement(FAIRequestID RequestID, EPathFollowingResult::
 
 EStateTreeRunStatus UMoveToPoint::Tick(FStateTreeExecutionContext& Context, const float DeltaTime)
 {
-	if(bIsMoving)
-	{
-		return EStateTreeRunStatus::Running;
-	}
-	return EStateTreeRunStatus::Succeeded;
+	return bIsMoving ? EStateTreeRunStatus::Running : EStateTreeRunStatus::Succeeded;
 }
 
 void UMoveToPoint::ExitState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition)
 {
-	if(Actor)
+	APawn* Pawn = Cast<APawn>(Actor);
+	if(Pawn)
 	{
-		APawn* Pawn = Cast<APawn>(Actor);
-		if(Pawn)
+		AAIController* Controller = Cast<AAIController>(Pawn->GetController());
+		if(Controller)
 		{
-			AAIController* Controller = Cast<AAIController>(Pawn->GetController());
-			if(Controller)
-			{
-				Controller->ReceiveMoveCompleted.RemoveDynamic(this, &UMoveToPoint::FinishMovement);
-			}
+			Controller->ReceiveMoveCompleted.RemoveDynamic(this, &UMoveToPoint::FinishMovement);
+			Controller->StopMovement();
 		}
 	}
 	

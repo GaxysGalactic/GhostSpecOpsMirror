@@ -131,7 +131,6 @@ SourceArt/**/*.tga
 # Binary Files
 Binaries/*
 Plugins/*/Binaries/*
-Plugins/Developer/*
 
 # Builds
 Build/*
@@ -172,6 +171,7 @@ Build/Android/res/*/*
 # Ignore plugins binaries on deep subfolders
 Plugins/**/Binaries/*
 Plugins/**/Intermediate/*
+Plugins/Developer/
 
 ### VisualStudio ###
 ## Ignore Visual Studio temporary files, build results, and

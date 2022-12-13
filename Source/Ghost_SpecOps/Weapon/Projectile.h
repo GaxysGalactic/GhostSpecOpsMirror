@@ -21,6 +21,7 @@ protected:
 
 private:
 
+	UPROPERTY(EditAnywhere)
 	UBoxComponent* CollisionBox;
 
 };

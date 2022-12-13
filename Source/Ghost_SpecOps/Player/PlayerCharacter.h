@@ -6,6 +6,8 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "PlayerCharacter.generated.h"
 
+#define TRACE_LENGTH 80000.f
+
 //Forward declaration
 class UCameraComponent;
 class USpringArmComponent;
@@ -18,6 +20,8 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 	UAnimMontage* FireWeaponMontage;
+
+	FVector HitTarget;
 	
 	GENERATED_BODY()
 
@@ -56,6 +60,8 @@ protected:
 	void OnFireButtonPressed();
 	
 	void OnFireButtonReleased();
+
+	void TraceUnderCrosshairs(FHitResult& TraceHitResult);
 		
 	void CalculateAimOffset(float DeltaTime);
 

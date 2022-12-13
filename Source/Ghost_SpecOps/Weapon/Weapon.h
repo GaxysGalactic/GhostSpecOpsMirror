@@ -5,21 +5,25 @@
 #include "Weapon.generated.h"
 
 class UStaticMeshComponent;
+class USkeletalMeshComponent;
+class UAnimationAsset;
 
 UCLASS()
 class GHOST_SPECOPS_API AWeapon : public AActor
 {
+private:
 	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, Category = "Weapon properties")
+	UAnimationAsset* FireAnimation;
 	
-public:	
-	AWeapon();
-
-	void Fire();
-
 protected:
 
 	UPROPERTY(EditDefaultsOnly)
 	UStaticMeshComponent* WeaponMesh;
+
+	UPROPERTY(VisibleAnywhere, Category = "Weapon properties")
+	USkeletalMeshComponent* WeaponSkeletalMesh; // if animated
 
 	UPROPERTY(EditDefaultsOnly)
 	float ShootDistance;
@@ -32,11 +36,12 @@ protected:
 	
 	virtual void BeginPlay() override;
 
-public:
-	
+public:	
+	AWeapon();
+
+	virtual void Fire(const FVector& InTarget);
+
 	UFUNCTION(BlueprintCallable)
 	FORCEINLINE UStaticMeshComponent* GetWeaponMesh() const { return WeaponMesh; }
-
-	// FTransform GetSocketTransform() { return WeaponMesh->GetSocketTransform(TEXT("LeftHandSocket"));}
 
 };

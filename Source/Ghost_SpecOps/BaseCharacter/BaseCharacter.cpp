@@ -20,13 +20,13 @@ ABaseCharacter::ABaseCharacter()
 
 }
 
-void ABaseCharacter::StartFire()
-{
-	if(CurrentWeapon)
-	{
-		CurrentWeapon->Fire();
-	}
-}
+// void ABaseCharacter::StartFire()
+// {
+// 	if(CurrentWeapon)
+// 	{
+// 		CurrentWeapon->Fire();
+// 	}
+// }
 
 void ABaseCharacter::BeginPlay()
 {

@@ -24,8 +24,8 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 	AWeapon* CurrentWeapon;
 
-	UFUNCTION(BlueprintCallable)
-	void StartFire();
+	// UFUNCTION(BlueprintCallable)
+	// void StartFire();
 	
 protected:
 	

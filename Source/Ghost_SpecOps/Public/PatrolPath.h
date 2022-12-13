@@ -28,10 +28,8 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class USplineComponent* Path;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bLoops;
+public:
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bIsGuardLocation;
-
+	USplineComponent* GetPath() const { return Path; }
+	
 };

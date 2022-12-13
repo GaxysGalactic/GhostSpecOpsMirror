@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "BaseCharacter.h"
+#include "../../../../../../../../../Program Files/Epic Games/UE_5.1/Engine/Plugins/Animation/RigLogic/Source/RigLogicLib/Public/trimd/Macros.h"
 #include "EnemyCharacter.generated.h"
 
 /**
@@ -35,5 +36,15 @@ protected:
 	/** Current health */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float Health;
+
+public:
+
+	/** Returns the patrol path */
+	FORCE_INLINE APatrolPath* GetPatrolPath() const { return PatrolPath; }
+
+	/** Returns the patrol index */
+	FORCE_INLINE int32 GetPatrolIndex() const { return PatrolIndex; }
+
+	void UpdatePatrolIndex();
 	
 };

@@ -37,6 +37,11 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float Health;
 
+	/** Direction of patrol. Only really useful when patrol doesn't cycle */
+	/** True - Forwards, False - Backwards */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool PatrolDirection;
+
 public:
 
 	/** Returns the patrol path */

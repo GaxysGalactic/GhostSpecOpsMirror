@@ -9,14 +9,14 @@
 AEnemyCharacter::AEnemyCharacter() :
 	PatrolIndex(0),
 	CanSeePlayer(false),
-	Health(100.f)
+	Health(100.f),
+	PatrolDirection(true)
 {
 }
 
 void AEnemyCharacter::UpdatePatrolIndex()
 {
-	USplineComponent* Path = PatrolPath->GetPath();
-	if(Path)
+	if(const USplineComponent* Path = PatrolPath->GetPath())
 	{
 		// If it's a single point...
 		if(Path->GetNumberOfSplinePoints() == 1)
@@ -39,7 +39,30 @@ void AEnemyCharacter::UpdatePatrolIndex()
 		// If it's not...
 		else
 		{
-			//TODO
+			if(PatrolDirection)
+			{
+				if(PatrolIndex + 1 >= Path->GetNumberOfSplinePoints())
+				{
+					PatrolDirection = false;
+					--PatrolIndex;
+				}
+				else
+				{
+					++PatrolIndex;
+				}
+			}
+			else
+			{
+				if(PatrolIndex - 1 < 0)
+				{
+					PatrolDirection = true;
+					++PatrolIndex;
+				}
+				else
+				{
+					--PatrolIndex;
+				}
+			}
 		}
 		
 	}

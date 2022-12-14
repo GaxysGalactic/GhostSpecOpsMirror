@@ -22,5 +22,9 @@ protected:
 	/** This task can only be executed on enemies */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Context")
 	AActor* Actor;
+
+	/** Location of the next patrol point */
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Output")
+	FVector TargetLocation;
 	
 };

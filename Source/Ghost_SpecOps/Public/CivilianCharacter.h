@@ -67,5 +67,7 @@ protected:
 	/** Gameplay tag container for activities civilian can use related to Smart Objects */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = SmartObjects)
 	FGameplayTagContainer SmartObjectActivities;
+
+	
 	
 };

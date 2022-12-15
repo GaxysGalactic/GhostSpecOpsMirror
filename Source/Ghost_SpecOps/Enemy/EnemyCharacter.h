@@ -3,8 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "BaseCharacter.h"
-#include "../../../../../../../../../Program Files/Epic Games/UE_5.1/Engine/Plugins/Animation/RigLogic/Source/RigLogicLib/Public/trimd/Macros.h"
+#include "../BaseCharacter/BaseCharacter.h"
 #include "EnemyCharacter.generated.h"
 
 /**
@@ -33,6 +32,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool CanSeePlayer;
 
+	/** Used for death state */
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	bool bIsDead;
+
 	/** Current health */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float Health;
@@ -42,14 +45,19 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool PatrolDirection;
 
+	/** Death animation montage */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation)
+	class UAnimMontage* DeathMontage;
+
 public:
 
 	/** Returns the patrol path */
-	FORCE_INLINE APatrolPath* GetPatrolPath() const { return PatrolPath; }
+	APatrolPath* GetPatrolPath() const { return PatrolPath; }
 
 	/** Returns the patrol index */
-	FORCE_INLINE int32 GetPatrolIndex() const { return PatrolIndex; }
+	int32 GetPatrolIndex() const { return PatrolIndex; }
 
+	/** Updates patrol index to the next point in sequence */
 	void UpdatePatrolIndex();
 	
 };

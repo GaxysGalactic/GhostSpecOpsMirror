@@ -3,12 +3,13 @@
 
 #include "EnemyCharacter.h"
 
-#include "PatrolPath.h"
+#include "../Tasks/PatrolPath.h"
 #include "Components/SplineComponent.h"
 
 AEnemyCharacter::AEnemyCharacter() :
 	PatrolIndex(0),
 	CanSeePlayer(false),
+	bIsDead(false),
 	Health(100.f),
 	PatrolDirection(true)
 {

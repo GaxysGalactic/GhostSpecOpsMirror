@@ -29,7 +29,7 @@ private:
 protected:
 
 	/** Used for the "Cower" state / animation */
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bIsFrightened;
 
 	/** Indicates if being alive is essential to mission success. */

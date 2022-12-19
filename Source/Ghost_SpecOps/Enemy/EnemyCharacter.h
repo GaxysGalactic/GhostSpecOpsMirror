@@ -36,6 +36,10 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	bool bIsDead;
 
+	/** Used for flee state */
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	bool bShouldRetreat;
+
 	/** Current health */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float Health;

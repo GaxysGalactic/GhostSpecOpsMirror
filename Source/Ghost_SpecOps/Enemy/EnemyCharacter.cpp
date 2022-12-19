@@ -10,6 +10,7 @@ AEnemyCharacter::AEnemyCharacter() :
 	PatrolIndex(0),
 	CanSeePlayer(false),
 	bIsDead(false),
+	bShouldRetreat(false),
 	Health(100.f),
 	PatrolDirection(true)
 {

@@ -10,9 +10,10 @@ EStateTreeRunStatus UMoveToPoint::EnterState(FStateTreeExecutionContext& Context
 {
 	if(!bTriggerOnEnterState)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("bTriggerOnEnterState is false"));
+		bIsMoving = false;
 		return EStateTreeRunStatus::Running;
 	}
-	
 	return RequestMovement();
 }
 
@@ -23,10 +24,13 @@ void UMoveToPoint::FinishMovement(FAIRequestID RequestID, EPathFollowingResult::
 
 EStateTreeRunStatus UMoveToPoint::Tick(FStateTreeExecutionContext& Context, const float DeltaTime)
 {
-	if(!bTriggerOnEnterState && bIsPreviousTaskFinished & !bIsMoving)
+	if(!bTriggerOnEnterState)
 	{
-		bIsPreviousTaskFinished = false;
-		return RequestMovement();
+		if(bIsPreviousTaskFinished && !bIsMoving)
+		{
+			return RequestMovement();
+		}
+		return EStateTreeRunStatus::Running;
 	}
 	return bIsMoving ? EStateTreeRunStatus::Running : EStateTreeRunStatus::Succeeded;
 }
@@ -58,7 +62,7 @@ EStateTreeRunStatus UMoveToPoint::RequestMovement()
 			const FPathFollowingRequestResult RequestResult = Controller->MoveTo(TargetLocation);
 			bIsMoving = true;
 
-			Controller->ReceiveMoveCompleted.AddDynamic(this, &UMoveToPoint::FinishMovement);
+			Controller->ReceiveMoveCompleted.AddUniqueDynamic(this, &UMoveToPoint::FinishMovement);
 
 			return EStateTreeRunStatus::Running;
 		}

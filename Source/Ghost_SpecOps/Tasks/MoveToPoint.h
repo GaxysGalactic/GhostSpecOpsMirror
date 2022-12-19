@@ -22,6 +22,8 @@ class GHOST_SPECOPS_API UMoveToPoint : public UStateTreeTaskBlueprintBase
 
 	virtual void ExitState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) override;
 
+	EStateTreeRunStatus RequestMovement();
+
 public:
 
 	UFUNCTION()
@@ -37,6 +39,15 @@ protected:
 	/** The target location to move to, passed in as input */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Input")
 	FVector TargetLocation;
+
+	/** Should the move request be triggered on Enter State? If not, depend on next variable... */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bTriggerOnEnterState;
+
+	/** Bind this boolean to a previous task output to ensure the move task happens after. */
+	/** Only useable if bTriggerOnEnterState = true */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bIsPreviousTaskFinished;
 
 	/** Is the pawn performing a move action? */
 	bool bIsMoving = false;

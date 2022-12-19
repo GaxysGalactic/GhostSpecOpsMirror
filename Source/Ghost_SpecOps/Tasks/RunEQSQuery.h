@@ -38,4 +38,8 @@ protected:
 	/** Output Location  */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Output")
 	FVector TargetLocation;
+
+	/** Output boolean. Useful for later tasks */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Output")
+	bool bIsFinished;
 };

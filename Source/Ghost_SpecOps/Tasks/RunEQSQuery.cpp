@@ -11,20 +11,18 @@ EStateTreeRunStatus URunEQSQuery::EnterState(FStateTreeExecutionContext& Context
 	FEnvQueryRequest Request(Query,Actor);
 	
 	Request.Execute(RunMode, this, &URunEQSQuery::FinishQuery);
+	bIsFinished = false;
 	
 	return Super::EnterState(Context, Transition);
 }
 
 void URunEQSQuery::FinishQuery(TSharedPtr<FEnvQueryResult> ResultPtr)
 {
-	// Do a Target location variable in enemy, make this a separate state
-
-
-	// OR add a "WaitBeforeMoving" to MoveTo...
 	FEnvQueryResult* Result = ResultPtr.Get();
 
 	if(Result)
 	{
 		TargetLocation = Result->GetItemAsLocation(0);
+		bIsFinished = true;
 	}
 }

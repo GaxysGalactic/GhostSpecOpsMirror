@@ -8,21 +8,12 @@
 EStateTreeRunStatus UMoveToPoint::EnterState(FStateTreeExecutionContext& Context,
                                              const FStateTreeTransitionResult& Transition)
 {
-	APawn* Pawn = Cast<APawn>(Actor);
-	if(Pawn)
+	if(!bTriggerOnEnterState)
 	{
-		AAIController* Controller = Cast<AAIController>(Pawn->GetController());
-		if(Controller)
-		{
-			const FPathFollowingRequestResult RequestResult = Controller->MoveTo(TargetLocation);
-			bIsMoving = true;
-
-			Controller->ReceiveMoveCompleted.AddDynamic(this, &UMoveToPoint::FinishMovement);
-
-			return EStateTreeRunStatus::Running;
-		}
+		return EStateTreeRunStatus::Running;
 	}
-	return EStateTreeRunStatus::Failed;
+	
+	return RequestMovement();
 }
 
 void UMoveToPoint::FinishMovement(FAIRequestID RequestID, EPathFollowingResult::Type Result)
@@ -32,6 +23,11 @@ void UMoveToPoint::FinishMovement(FAIRequestID RequestID, EPathFollowingResult::
 
 EStateTreeRunStatus UMoveToPoint::Tick(FStateTreeExecutionContext& Context, const float DeltaTime)
 {
+	if(!bTriggerOnEnterState && bIsPreviousTaskFinished & !bIsMoving)
+	{
+		bIsPreviousTaskFinished = false;
+		return RequestMovement();
+	}
 	return bIsMoving ? EStateTreeRunStatus::Running : EStateTreeRunStatus::Succeeded;
 }
 
@@ -49,6 +45,25 @@ void UMoveToPoint::ExitState(FStateTreeExecutionContext& Context, const FStateTr
 	}
 	
 	Super::ExitState(Context, Transition);
+}
+
+EStateTreeRunStatus UMoveToPoint::RequestMovement()
+{
+	APawn* Pawn = Cast<APawn>(Actor);
+	if(Pawn)
+	{
+		AAIController* Controller = Cast<AAIController>(Pawn->GetController());
+		if(Controller)
+		{
+			const FPathFollowingRequestResult RequestResult = Controller->MoveTo(TargetLocation);
+			bIsMoving = true;
+
+			Controller->ReceiveMoveCompleted.AddDynamic(this, &UMoveToPoint::FinishMovement);
+
+			return EStateTreeRunStatus::Running;
+		}
+	}
+	return EStateTreeRunStatus::Failed;
 }
 
 

@@ -55,5 +55,16 @@ void ABaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 	DOREPLIFETIME(ABaseCharacter, bIsRunning)
 }
 
+void ABaseCharacter::MulticastPlayAnimMontage_Implementation(UAnimMontage* Montage)
+{
+	PlayAnimMontage(Montage);
+	//GetMesh()->GetAnimInstance()->OnMontageEnded.Broadcast();
+}
+
+bool ABaseCharacter::MulticastPlayAnimMontage_Validate(UAnimMontage* Montage)
+{
+	return true;
+}
+
 
 

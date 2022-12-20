@@ -32,7 +32,7 @@ public:
 protected:
 
 	/** Actor that the State Tree is attached to.
-		This task requires it to be a pawn for it to work properly. */
+	This task requires it to be a pawn for it to work properly. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Context")
 	AActor* Actor;
 
@@ -40,12 +40,12 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Input")
 	FVector TargetLocation;
 
-	/** Should the move request be triggered on Enter State? If not, depend on next variable... */
+	/** Should the move request be triggered on Enter State? */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bTriggerOnEnterState;
 
-	/** Bind this boolean to a previous task output to ensure the move task happens after. */
-	/** Only useable if bTriggerOnEnterState = true */
+	/** Bind this boolean to a previous task output to ensure the move task happens after. 
+	Only useable if bTriggerOnEnterState = false */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bIsPreviousTaskFinished;
 

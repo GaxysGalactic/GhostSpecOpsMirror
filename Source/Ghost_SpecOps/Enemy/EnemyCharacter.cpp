@@ -14,6 +14,7 @@ AEnemyCharacter::AEnemyCharacter() :
 	Health(100.f),
 	PatrolDirection(true)
 {
+	
 }
 
 void AEnemyCharacter::UpdatePatrolIndex()

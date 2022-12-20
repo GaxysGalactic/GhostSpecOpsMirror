@@ -1,6 +1,6 @@
 #pragma once
 #include "CoreMinimal.h"
-#include "Weapon.h"
+#include "../Weapon/Weapon.h"
 #include "GameFramework/Character.h"
 #include "Ghost_SpecOps/Types/TurningInPlace.h"
 #include "BaseCharacter.generated.h"

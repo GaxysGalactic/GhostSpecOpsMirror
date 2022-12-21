@@ -1,17 +1,13 @@
 #include "PlayerCharacter.h"
 
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Ghost_SpecOps/Components/PlayerCombatComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Net/UnrealNetwork.h"
 
 APlayerCharacter::APlayerCharacter()
 {
-	RunSpeed = 900.f;
-	WalkSpeed = 600.f;
-	AimWalkSpeed = 400.f;
-	ProneSpeed = 100.f;
-
 	SpringArmComponent = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
 	SpringArmComponent->SetupAttachment(GetMesh());
 	SpringArmComponent->TargetArmLength = 600.f;
@@ -21,13 +17,25 @@ APlayerCharacter::APlayerCharacter()
 	CameraComponent->SetupAttachment(SpringArmComponent, USpringArmComponent::SocketName);
 	CameraComponent->bUsePawnControlRotation = false;
 
+	CameraComponent_ADS = CreateDefaultSubobject<UCameraComponent>(TEXT("ADS Camera"));
+	// CameraComponent_ADS->SetupAttachment(GetMesh(), FName("HeadSocket"));
+
+
 	bUseControllerRotationYaw = false;
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
+
+	CombatComponent = CreateDefaultSubobject<UPlayerCombatComponent>(TEXT("CombatComponent"));
+	CombatComponent->SetIsReplicated(true);
 }
 
+void APlayerCharacter::BeginPlay()
+{
+	Super::BeginPlay();
 
+	PlayerController = UGameplayStatics::GetPlayerController(this, 0);
+}
 
 void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
@@ -36,19 +44,21 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	PlayerInputComponent->BindAxis("MoveForward", this, &APlayerCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &APlayerCharacter::MoveRight);
 	PlayerInputComponent->BindAxis("LookUp", this, &APlayerCharacter::AddControllerPitchInput);
-	PlayerInputComponent->BindAxis("Turn", this, &APlayerCharacter::AddControllerYawInput);
+	PlayerInputComponent->BindAxis("Turn", this, &APlayerCharacter::Turn);
 
 	PlayerInputComponent->BindAction("Run", IE_Pressed, this, &APlayerCharacter::OnRunButtonPressed);
 	PlayerInputComponent->BindAction("Run", IE_Released, this, &APlayerCharacter::OnRunButtonReleased);
 
 	PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &APlayerCharacter::OnCrouchButtonPressed);
 
-	// PlayerInputComponent->BindAction("Fire", IE_Released, this, &APlayerCharacter::StartFire);
 	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &APlayerCharacter::OnFireButtonPressed);
 	PlayerInputComponent->BindAction("Fire", IE_Released, this, &APlayerCharacter::OnFireButtonReleased);
 
 	PlayerInputComponent->BindAction("Aim", IE_Pressed, this, &APlayerCharacter::OnAimButtonPressed);
 	PlayerInputComponent->BindAction("Aim", IE_Released, this, &APlayerCharacter::OnAimButtonReleased);
+
+	PlayerInputComponent->BindAction("AimDownSights", IE_Pressed, this, &APlayerCharacter::OnADSButtonPressed);
+	PlayerInputComponent->BindAction("AimDownSights", IE_Released, this, &APlayerCharacter::OnADSButtonReleased);
 
 	// PlayerInputComponent->BindAction("Prone", IE_Pressed, this, &APlayerCharacter::OnProneButtonPressed);
 
@@ -57,102 +67,122 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 void APlayerCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
-
 	CalculateAimOffset(DeltaSeconds);
 }
 
-void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+
+
+void APlayerCharacter::PostInitializeComponents()
 {
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	Super::PostInitializeComponents();
+	if(CombatComponent)
+	{
+		CombatComponent->PlayerCharacter = this;
+	}
+
+	// if(CurrentWeapon && CameraComponent_ADS && CurrentWeapon->GetWeaponMesh())
+	// {
+	// 	CameraComponent_ADS->AttachToComponent(CurrentWeapon->GetWeaponMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("ADS_Socket"));
+	// }
 	
-	DOREPLIFETIME(APlayerCharacter, bIsProne)
-	DOREPLIFETIME(APlayerCharacter, bIsStanding);
+}
+
+//------------------------------------------- Movement ------------------------------------------------------------
+
+void APlayerCharacter::MoveForward(float InAxisValue)
+{
+	if(Controller && InAxisValue)
+	{
+		if(bIsRunning && InAxisValue < 0.f)
+		{
+			InAxisValue *= -1;
+		}
+		const FRotator YawRotation(0.f, Controller->GetControlRotation().Yaw, 0.f);
+		const FVector Direction(FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X));
+		AddMovementInput(Direction, InAxisValue);
+	}
+}
+
+void APlayerCharacter::MoveRight(float InAxisValue)
+{
+	if(!bIsRunning)
+	{
+		if(Controller && InAxisValue && !bIsProne)
+		{
+			const FRotator YawRotation(0.f, Controller->GetControlRotation().Yaw, 0.f);
+			const FVector Direction(FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y));
+			AddMovementInput(Direction, InAxisValue);
+		}
+		if(bIsProne)
+		{
+			AddControllerYawInput(InAxisValue);
+		}	
+	}
+}
+
+void APlayerCharacter::Turn(float InAxisValue)
+{
+	if(bIsRunning)
+	{
+		InAxisValue *= 0.2;
+	}
+	AddControllerYawInput(InAxisValue);
+}
+
+void APlayerCharacter::TurnInPlace(float DeltaTime)
+{
+	if(AO_Yaw > 90.f)
+	{
+		TurningInPlace = ETurningInPlace::ETIP_Right;
+		// AddControllerYawInput(1.f);
+	}
+	else if(AO_Yaw < -90.f)
+	{
+		TurningInPlace = ETurningInPlace::ETIP_Left;
+		// AddControllerYawInput(-1.f);
+	}
+
+	if(TurningInPlace != ETurningInPlace::ETIP_NotTurning)
+	{
+		InterpAO_Yaw = FMath::FInterpTo(InterpAO_Yaw, 0.f, DeltaTime, 4.f);
+		AO_Yaw = InterpAO_Yaw;
+		if(FMath::Abs(AO_Yaw) < 15.f)
+		{
+			TurningInPlace = ETurningInPlace::ETIP_NotTurning;
+			StartingAimRotation = FRotator(0.f, GetBaseAimRotation().Yaw, 0.f);
+		}
+	}
 }
 
 //-------------------------------------------- Fire ---------------------------------------------------------------
 
 void APlayerCharacter::OnFireButtonPressed()
 {
-	PlayFireMontage(bIsAiming);
-	if(CurrentWeapon)
+	if(CombatComponent && !bIsRunning)
 	{
-		CurrentWeapon->Fire(HitTarget);
+		CombatComponent->FireButtonPressed(true);
 	}
 }
 
 void APlayerCharacter::OnFireButtonReleased()
 {
-	
-}
-
-void APlayerCharacter::TraceUnderCrosshairs(FHitResult& TraceHitResult)
-{
-	FVector2d ViewPortSize;
-	if(GEngine && GEngine->GameViewport)
+	if (CombatComponent)
 	{
-		GEngine->GameViewport->GetViewportSize(ViewPortSize);
-	}
-
-	FVector2d CrosshairLocation(ViewPortSize.X / 2.f, ViewPortSize.Y / 2.f);
-	FVector CrosshairWolrdPosition;
-	FVector CrosshairWorldDirection;
-	bool bScreenToWorld = UGameplayStatics::DeprojectScreenToWorld(
-		UGameplayStatics::GetPlayerController(this, 0),
-		CrosshairLocation,
-		CrosshairWolrdPosition,
-		CrosshairWorldDirection
-	);
-
-	if (bScreenToWorld)
-	{
-		FVector Start = CrosshairWolrdPosition;
-		FVector End = Start + CrosshairWorldDirection * TRACE_LENGTH;
-		GetWorld()->LineTraceSingleByChannel(
-			TraceHitResult,
-			Start,
-			End,
-			ECC_Visibility
-		);
-
-		if (!TraceHitResult.bBlockingHit)
-		{
-			TraceHitResult.ImpactPoint = End;
-			HitTarget = End;
-		}
-		else
-		{
-			HitTarget = TraceHitResult.ImpactPoint;
-			DrawDebugSphere(
-				GetWorld(),
-				TraceHitResult.ImpactPoint,
-				12.f,
-				12.f,
-				FColor::Red
-			);
-		}
+		CombatComponent->FireButtonPressed(false);
 	}
 }
-
-void APlayerCharacter::PlayFireMontage(bool bInAiming)
-{
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if(AnimInstance && FireWeaponMontage)
-	{
-		AnimInstance->Montage_Play(FireWeaponMontage);
-		FName SectionName;
-		SectionName = bInAiming ? FName("RifleAim") : FName("RifleHip");
-		AnimInstance->Montage_JumpToSection(SectionName);
-	}
-}
-
-
-//-------------------------------------------- Movement ---------------------------------------------------------------
 
 void APlayerCharacter::CalculateAimOffset(float DeltaTime)
 {
+	if(!CombatComponent || !CurrentWeapon)
+	{
+		return;
+	}
+	
 	FVector Velocity = GetVelocity();
 	Velocity.Z = 0.f;
 	Speed = Velocity.Size();
+	bool bIsInAir = GetCharacterMovement()->IsFalling();
 	
 	if(Speed == 0.f)
 	{
@@ -163,7 +193,7 @@ void APlayerCharacter::CalculateAimOffset(float DeltaTime)
 		{
 			InterpAO_Yaw = AO_Yaw;
 		}
-		bUseControllerRotationYaw = true;
+		bUseControllerRotationYaw = false;
 		TurnInPlace(DeltaTime);
 	}
 	if(Speed > 0.f)
@@ -184,54 +214,7 @@ void APlayerCharacter::CalculateAimOffset(float DeltaTime)
 	}
 }
 
-void APlayerCharacter::TurnInPlace(float DeltaTime)
-{
-	if(AO_Yaw > 90.f)
-	{
-		TurningInPlace = ETurningInPlace::ETIP_Right;
-	}
-	else if(AO_Yaw < -90.f)
-	{
-		TurningInPlace = ETurningInPlace::ETIP_Left;
-	}
-
-	if(TurningInPlace != ETurningInPlace::ETIP_NotTurning)
-	{
-		InterpAO_Yaw = FMath::FInterpTo(InterpAO_Yaw, 0.f, DeltaTime, 4.f);
-		AO_Yaw = InterpAO_Yaw;
-		if(FMath::Abs(AO_Yaw) < 15.f)
-		{
-			TurningInPlace = ETurningInPlace::ETIP_NotTurning;
-			StartingAimRotation = FRotator(0.f, GetBaseAimRotation().Yaw, 0.f);
-		}
-	}
-}
-
-void APlayerCharacter::MoveForward(float AxisValue)
-{
-	if(Controller && AxisValue)
-	{
-		const FRotator YawRotation(0.f, Controller->GetControlRotation().Yaw, 0.f);
-		const FVector Direction(FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X));
-		AddMovementInput(Direction, AxisValue);
-	}
-}
-
-void APlayerCharacter::MoveRight(float AxisValue)
-{
-	if(Controller && AxisValue && !bIsProne)
-	{
-		const FRotator YawRotation(0.f, Controller->GetControlRotation().Yaw, 0.f);
-		const FVector Direction(FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y));
-		AddMovementInput(Direction, AxisValue);
-	}
-	if(bIsProne)
-	{
-		AddControllerYawInput(AxisValue);
-	}
-}
-
-//---------------------------------------------- Crouch ---------------------------------------------------------------
+//---------------------------------------- Crouch & Prone ---------------------------------------------------------
 
 void APlayerCharacter::OnCrouchButtonPressed()
 {
@@ -248,8 +231,6 @@ void APlayerCharacter::OnCrouchButtonPressed()
 	}
 }
 
-//---------------------------------------------- Prone ---------------------------------------------------------------
-
 void APlayerCharacter::OnProneButtonPressed()
 {
 	if (bIsProne)
@@ -263,12 +244,11 @@ void APlayerCharacter::OnProneButtonPressed()
 		FTimerDelegate TimerCallback;
 		TimerCallback.BindLambda([&]
 		{
-			GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+			GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
 		});
 
 		FTimerHandle Handle;
 		GetWorld()->GetTimerManager().SetTimer(Handle, TimerCallback, 1.3f, false);
-
 	}
 	else
 	{
@@ -286,7 +266,6 @@ void APlayerCharacter::OnProneButtonPressed()
 
 		FTimerHandle Handle;
 		GetWorld()->GetTimerManager().SetTimer(Handle, TimerCallback, 1.3f, false);
-
 	}
 	
 	if(!HasAuthority())
@@ -305,7 +284,7 @@ bool APlayerCharacter::Server_OnProneButtonPressed_Validate()
 	return true;
 }
 
-//----------------------------------------------- Aim -----------------------------------------------------------------
+//---------------------------------------------- Aim --------------------------------------------------------------
 
 void APlayerCharacter::OnAimButtonPressed()
 {
@@ -321,7 +300,51 @@ void APlayerCharacter::SetAiming(bool bInIsAiming)
 {
 	bIsAiming = bInIsAiming;
 	Server_SetAiming(bInIsAiming);
-	GetCharacterMovement()->MaxWalkSpeed = bIsAiming ? AimWalkSpeed : WalkSpeed;
+	GetCharacterMovement()->MaxWalkSpeed = bIsAiming ? AimWalkSpeed : BaseWalkSpeed;
+}
+
+void APlayerCharacter::Server_SetAiming_Implementation(bool bInIsAiming)
+{
+	bIsAiming = bInIsAiming;
+	GetCharacterMovement()->MaxWalkSpeed = bIsAiming ? AimWalkSpeed : BaseWalkSpeed;
+}
+
+bool APlayerCharacter::Server_SetAiming_Validate(bool bInIsAiming)
+{
+	return true;
+}
+
+//----------------------------------------------- ADS -----------------------------------------------------------------
+
+void APlayerCharacter::OnADSButtonPressed()
+{
+	SetAds(true);
+}
+
+void APlayerCharacter::OnADSButtonReleased()
+{
+	SetAds(false);
+}
+
+void APlayerCharacter::SetAds(bool bInAds)
+{
+	bIsADS = bInAds;
+
+	FTransform WeaponADSSocket =  CurrentWeapon->GetWeaponMesh()->GetSocketTransform(FName("ADS_Socket"), RTS_World);
+	FTransform ZeroTransform = CameraComponent->GetComponentTransform();
+
+	if(bIsADS && CurrentWeapon && CurrentWeapon->GetWeaponMesh())
+	{
+		CameraComponent->AttachToComponent(CurrentWeapon->GetWeaponMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, FName("ADS_Socket"));
+		SpringArmComponent->bUsePawnControlRotation = false;
+		CameraComponent->bUsePawnControlRotation = true;
+	}
+	else
+	{
+		// CameraComponent->AttachToComponent(SpringArmComponent, FAttachmentTransformRules::SnapToTargetNotIncludingScale, USpringArmComponent::SocketName);
+		// SpringArmComponent->bUsePawnControlRotation = true;
+		// CameraComponent->bUsePawnControlRotation = false;
+	}
 }
 
 //----------------------------------------------- Run -----------------------------------------------------------------
@@ -347,44 +370,15 @@ void APlayerCharacter::SetRunning(bool bInIsRunning)
 		}
 		else
 		{
-			GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+			GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
 		}
 		Server_SetRunning(bInIsRunning);
 	}
 }
 
-//---------------------------------------------------------------------------------------------------------------------
-
-FVector APlayerCharacter::GetPawnViewLocation() const
-{
-	if(IsValid(CameraComponent))
-	{
-		return CameraComponent->GetComponentLocation();
-	}
-	
-	return Super::GetPawnViewLocation();
-}
-
-//----------------------------------Server Implementations ------------------------------------------------------------
-
-void APlayerCharacter::Server_SetAiming_Implementation(bool bInIsAiming)
-{
-	bIsAiming = bInIsAiming;
-	GetCharacterMovement()->MaxWalkSpeed = bIsAiming ? AimWalkSpeed : WalkSpeed;
-}
-
 void APlayerCharacter::Server_SetRunning_Implementation(bool bInIsRunning)
 {
 	bIsRunning = bInIsRunning;
-}
-
-
-
-//------------------------------------ Server validates ---------------------------------------------------------------
-
-bool APlayerCharacter::Server_SetAiming_Validate(bool bInIsAiming)
-{
-	return true;
 }
 
 bool APlayerCharacter::Server_SetRunning_Validate(bool bInIsrunning)

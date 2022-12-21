@@ -6,7 +6,6 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "PlayerCharacter.generated.h"
 
-#define TRACE_LENGTH 80000.f
 
 //Forward declaration
 class UCameraComponent;
@@ -16,102 +15,85 @@ class UAnimMontage;
 UCLASS()
 class GHOST_SPECOPS_API APlayerCharacter : public ABaseCharacter
 {
-private:
-
-	UPROPERTY(EditAnywhere, Category = Combat)
-	UAnimMontage* FireWeaponMontage;
-
-	FVector HitTarget;
-	
 	GENERATED_BODY()
 
-	APlayerCharacter();
-
 public:
+	APlayerCharacter();
+	
+	virtual void Tick(float DeltaSeconds) override;
+	virtual void BeginPlay() override;
+	virtual void PostInitializeComponents() override;
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	FORCEINLINE UCameraComponent* GetFollowCamera() const { return CameraComponent; }
 
-	void PlayFireMontage(bool bInAiming);
+private:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	UCameraComponent* CameraComponent;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	UCameraComponent* CameraComponent_ADS;
+
+	UPROPERTY(EditAnywhere, Category = Camera)
+	AActor* ViewActor;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	USpringArmComponent* SpringArmComponent;
+
+	APlayerController* PlayerController;
 
 protected:
 
-	float Speed;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Camera)
-	UCameraComponent* CameraComponent;
-	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Camera)
-	USpringArmComponent* SpringArmComponent;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	float WalkSpeed;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	float RunSpeed;
-	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	float ProneSpeed;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	float AimWalkSpeed;
-
 	FRotator StartingAimRotation;
 
-	//------------------------------------- Functions -----------------------------------------------------------------
+	//------------------------------------------- Movement ------------------------------------------------------------
+	
+	void MoveForward(float InAxisValue);
+
+	void MoveRight(float InAxisValue);
+
+	void Turn(float InAxisValue);
+	
+	void TurnInPlace(float InAxisValue);
+	
+	//-------------------------------------------- Fire ---------------------------------------------------------------
 
 	void OnFireButtonPressed();
 	
 	void OnFireButtonReleased();
 
-	void TraceUnderCrosshairs(FHitResult& TraceHitResult);
-		
 	void CalculateAimOffset(float DeltaTime);
 
-	void TurnInPlace(float DeltaTime);
-	
-	//-----------------------------------------------------------------------------------------------------------------
-	
-	void MoveForward(float AxisValue);
-
-	void MoveRight(float AxisValue);
-
-	//-----------------------------------------------------------------------------------------------------------------
+	//---------------------------------------- Crouch & Prone ---------------------------------------------------------
 
 	void OnCrouchButtonPressed();
 
 	void OnProneButtonPressed();
 
-	//-----------------------------------------------------------------------------------------------------------------
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_OnProneButtonPressed();
+
+	//---------------------------------------------- Aim --------------------------------------------------------------
 
 	void OnAimButtonPressed();
 	void OnAimButtonReleased();
 	void SetAiming(bool bInIsAiming);
 
-	//-----------------------------------------------------------------------------------------------------------------
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_SetAiming(bool bInIsAiming);
+
+	//---------------------------------------------- ADS --------------------------------------------------------------
+
+	void OnADSButtonPressed();
+	void OnADSButtonReleased();
+	void SetAds(bool bInAds);
+
+	//---------------------------------------------- Run --------------------------------------------------------------
 
 	void OnRunButtonPressed();
 	void OnRunButtonReleased();
 	void SetRunning(bool bInIsRunning);
 
-	//---------------------------------------------- RPC --------------------------------------------------------------
-
-	UFUNCTION(Server, Reliable, WithValidation)
-	void Server_SetAiming(bool bInIsAiming);
-
 	UFUNCTION(Server, Reliable, WithValidation)
 	void Server_SetRunning(bool bInIsRunning);
 
-	UFUNCTION(Server, Reliable, WithValidation)
-	void Server_OnProneButtonPressed();
-
-	//-----------------------------------------------------------------------------------------------------------------
-
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
-	//-----------------------------------------------------------------------------------------------------------------
-
-	virtual FVector GetPawnViewLocation() const override;
-
-	virtual void Tick(float DeltaSeconds) override;
-	
 };

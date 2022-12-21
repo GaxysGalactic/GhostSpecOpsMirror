@@ -56,7 +56,7 @@ void UPlayerCombatComponent::SetHUDCrosshairs(float DeltaTime)
 		if(HUD)
 		{
 			FHUDPackage HUDPackage;
-			if(PlayerCharacter->GetWeapon())
+			if(PlayerCharacter->GetWeapon() && !PlayerCharacter->bIsADS)
 			{
 				HUDPackage.CrosshairsCenter = PlayerCharacter->GetWeapon()->CrosshairsCenter;
 				HUDPackage.CrosshairsTop = PlayerCharacter->GetWeapon()->CrosshairsTop;
@@ -93,7 +93,7 @@ void UPlayerCombatComponent::InterpFOV(float DeltaTime)
 {
 	if(PlayerCharacter->GetWeapon())
 	{
-		if(PlayerCharacter->bIsAiming)
+		if(PlayerCharacter->bIsAiming && !PlayerCharacter->bIsADS)
 		{
 			CurrentFOV = FMath::FInterpTo(CurrentFOV, PlayerCharacter->GetWeapon()->GetZoomedFOV(), DeltaTime, PlayerCharacter->GetWeapon()->GetZoomInterpSpeed());			
 		}

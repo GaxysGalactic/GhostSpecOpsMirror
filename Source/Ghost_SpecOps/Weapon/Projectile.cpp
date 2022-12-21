@@ -38,16 +38,16 @@ void AProjectile::BeginPlay()
 		);
 	}
 
-	// if(HasAuthority())
-	// {
-	// 	CollisionBox->OnComponentHit.AddDynamic(this, &AProjectile::OnHit);
-	// }
+	if(HasAuthority())
+	{
+		CollisionBox->OnComponentHit.AddDynamic(this, &AProjectile::OnHit);
+	}
 }
 
-// void AProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* HitActor, UPrimitiveComponent OtherComp, FVector NormalImpolse, const FHitResult& InHit)
-// {
-// 	
-// }
+void AProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* HitActor, UPrimitiveComponent* OtherComp, FVector NormalImpolse, const FHitResult& InHit)
+{
+	Destroy();
+}
 
 void AProjectile::Tick(float DeltaTime)
 {

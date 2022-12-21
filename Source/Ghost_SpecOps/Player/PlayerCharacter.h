@@ -31,12 +31,6 @@ private:
 	UCameraComponent* CameraComponent;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	UCameraComponent* CameraComponent_ADS;
-
-	UPROPERTY(EditAnywhere, Category = Camera)
-	AActor* ViewActor;
-	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	USpringArmComponent* SpringArmComponent;
 
 	APlayerController* PlayerController;

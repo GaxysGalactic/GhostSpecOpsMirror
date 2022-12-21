@@ -14,9 +14,10 @@ AWeapon::AWeapon()
 
 void AWeapon::Fire(const FVector& InTarget)
 {
-	if(FireAnimation)
+	if(FireAnimation && ImpactParticles)
 	{
 		WeaponSkeletalMesh->PlayAnimation(FireAnimation, false);
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactParticles, InTarget);// not working
 	}
 }
 

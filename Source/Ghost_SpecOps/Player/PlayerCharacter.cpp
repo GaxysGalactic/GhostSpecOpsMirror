@@ -17,10 +17,6 @@ APlayerCharacter::APlayerCharacter()
 	CameraComponent->SetupAttachment(SpringArmComponent, USpringArmComponent::SocketName);
 	CameraComponent->bUsePawnControlRotation = false;
 
-	CameraComponent_ADS = CreateDefaultSubobject<UCameraComponent>(TEXT("ADS Camera"));
-	// CameraComponent_ADS->SetupAttachment(GetMesh(), FName("HeadSocket"));
-
-
 	bUseControllerRotationYaw = false;
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 
@@ -79,11 +75,6 @@ void APlayerCharacter::PostInitializeComponents()
 	{
 		CombatComponent->PlayerCharacter = this;
 	}
-
-	// if(CurrentWeapon && CameraComponent_ADS && CurrentWeapon->GetWeaponMesh())
-	// {
-	// 	CameraComponent_ADS->AttachToComponent(CurrentWeapon->GetWeaponMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("ADS_Socket"));
-	// }
 	
 }
 
@@ -134,12 +125,12 @@ void APlayerCharacter::TurnInPlace(float DeltaTime)
 	if(AO_Yaw > 90.f)
 	{
 		TurningInPlace = ETurningInPlace::ETIP_Right;
-		// AddControllerYawInput(1.f);
+		// AddControllerYawInput(10.f);
 	}
 	else if(AO_Yaw < -90.f)
 	{
 		TurningInPlace = ETurningInPlace::ETIP_Left;
-		// AddControllerYawInput(-1.f);
+		// AddControllerYawInput(-10.f);
 	}
 
 	if(TurningInPlace != ETurningInPlace::ETIP_NotTurning)
@@ -182,7 +173,7 @@ void APlayerCharacter::CalculateAimOffset(float DeltaTime)
 	FVector Velocity = GetVelocity();
 	Velocity.Z = 0.f;
 	Speed = Velocity.Size();
-	bool bIsInAir = GetCharacterMovement()->IsFalling();
+	// bool bIsInAir = GetCharacterMovement()->IsFalling();
 	
 	if(Speed == 0.f)
 	{
@@ -193,7 +184,7 @@ void APlayerCharacter::CalculateAimOffset(float DeltaTime)
 		{
 			InterpAO_Yaw = AO_Yaw;
 		}
-		bUseControllerRotationYaw = false;
+		bUseControllerRotationYaw = true;
 		TurnInPlace(DeltaTime);
 	}
 	if(Speed > 0.f)
@@ -205,6 +196,11 @@ void APlayerCharacter::CalculateAimOffset(float DeltaTime)
 	}
 
 	AO_Pitch = GetBaseAimRotation().Pitch;
+
+	AO_Pitch = FMath::Clamp(AO_Pitch, -70.f, 70.f);
+	
+	UE_LOG(LogTemp, Warning, TEXT("Pitch: %f"), AO_Pitch);
+	
 	if(AO_Pitch >= 90.f && !IsLocallyControlled())
 	{
 		//Map pitch from [270, 360) to [-90, 0)
@@ -235,6 +231,13 @@ void APlayerCharacter::OnProneButtonPressed()
 {
 	if (bIsProne)
 	{
+		FRotator ActorRotator = GetActorRotation();
+		FVector UpVector = (UKismetMathLibrary::GetUpVector(ActorRotator) * FVector(0.f, 0.f, 180.f)) + GetActorLocation();
+
+		FHitResult HitResult;
+		bool bCanStandUp;
+		bCanStandUp = GetWorld()->LineTraceSingleByChannel(HitResult, GetActorLocation(), UpVector, ECC_Visibility);
+
 		bIsProne = false;
 		bIsStanding = true;
 
@@ -298,15 +301,18 @@ void APlayerCharacter::OnAimButtonReleased()
 
 void APlayerCharacter::SetAiming(bool bInIsAiming)
 {
-	bIsAiming = bInIsAiming;
-	Server_SetAiming(bInIsAiming);
-	GetCharacterMovement()->MaxWalkSpeed = bIsAiming ? AimWalkSpeed : BaseWalkSpeed;
+	if(!bIsRunning)
+	{
+		bIsAiming = bInIsAiming;
+		Server_SetAiming(bInIsAiming);
+		GetCharacterMovement()->MaxWalkSpeed = (bIsAiming && !bIsADS) ? AimWalkSpeed : BaseWalkSpeed;
+	}
 }
 
 void APlayerCharacter::Server_SetAiming_Implementation(bool bInIsAiming)
 {
 	bIsAiming = bInIsAiming;
-	GetCharacterMovement()->MaxWalkSpeed = bIsAiming ? AimWalkSpeed : BaseWalkSpeed;
+	GetCharacterMovement()->MaxWalkSpeed = (bIsAiming && !bIsADS) ? AimWalkSpeed : BaseWalkSpeed;
 }
 
 bool APlayerCharacter::Server_SetAiming_Validate(bool bInIsAiming)
@@ -319,19 +325,18 @@ bool APlayerCharacter::Server_SetAiming_Validate(bool bInIsAiming)
 void APlayerCharacter::OnADSButtonPressed()
 {
 	SetAds(true);
+	SetAiming(true);
 }
 
 void APlayerCharacter::OnADSButtonReleased()
 {
 	SetAds(false);
+	SetAiming(false);
 }
 
 void APlayerCharacter::SetAds(bool bInAds)
 {
 	bIsADS = bInAds;
-
-	FTransform WeaponADSSocket =  CurrentWeapon->GetWeaponMesh()->GetSocketTransform(FName("ADS_Socket"), RTS_World);
-	FTransform ZeroTransform = CameraComponent->GetComponentTransform();
 
 	if(bIsADS && CurrentWeapon && CurrentWeapon->GetWeaponMesh())
 	{
@@ -341,9 +346,9 @@ void APlayerCharacter::SetAds(bool bInAds)
 	}
 	else
 	{
-		// CameraComponent->AttachToComponent(SpringArmComponent, FAttachmentTransformRules::SnapToTargetNotIncludingScale, USpringArmComponent::SocketName);
-		// SpringArmComponent->bUsePawnControlRotation = true;
-		// CameraComponent->bUsePawnControlRotation = false;
+		CameraComponent->AttachToComponent(SpringArmComponent, FAttachmentTransformRules::SnapToTargetNotIncludingScale, USpringArmComponent::SocketName);
+		SpringArmComponent->bUsePawnControlRotation = true;
+		CameraComponent->bUsePawnControlRotation = false;
 	}
 }
 

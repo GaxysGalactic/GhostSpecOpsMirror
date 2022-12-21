@@ -3,7 +3,7 @@
 
 #include "FindNextPatrolPoint.h"
 
-#include "Ghost_SpecOps/Enemy/EnemyCharacter.h"
+#include "../Enemy/EnemyCharacter.h"
 #include "PatrolPath.h"
 #include "Components/SplineComponent.h"
 

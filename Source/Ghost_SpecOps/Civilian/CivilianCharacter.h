@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Ghost_SpecOps/BaseCharacter/BaseCharacter.h"
+#include "../BaseCharacter/BaseCharacter.h"
 #include "GameplayTagContainer.h"
 #include "CivilianCharacter.generated.h"
 
@@ -29,7 +29,7 @@ private:
 protected:
 
 	/** Used for the "Cower" state / animation */
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bIsFrightened;
 
 	/** Indicates if being alive is essential to mission success. */

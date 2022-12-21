@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Ghost_SpecOps/BaseCharacter/BaseCharacter.h"
+#include "../BaseCharacter/BaseCharacter.h"
 #include "EnemyCharacter.generated.h"
 
 /**
@@ -32,6 +32,14 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool CanSeePlayer;
 
+	/** Used for death state */
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	bool bIsDead;
+
+	/** Used for flee state */
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	bool bShouldRetreat;
+
 	/** Current health */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float Health;
@@ -41,6 +49,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool PatrolDirection;
 
+	/** Death animation montage */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation)
+	class UAnimMontage* DeathMontage;
+
 public:
 
 	/** Returns the patrol path */
@@ -49,6 +61,7 @@ public:
 	/** Returns the patrol index */
 	int32 GetPatrolIndex() const { return PatrolIndex; }
 
+	/** Updates patrol index to the next point in sequence */
 	void UpdatePatrolIndex();
 	
 };

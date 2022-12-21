@@ -20,10 +20,6 @@ class GHOST_SPECOPS_API UPauseTimer : public UStateTreeTaskBlueprintBase
 
 protected:
 
-	/** Actor that the State Tree is attached to. */
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Context")
-	AActor* Actor;
-
 	/** Timer Handle passed in via input */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Input")
 	FTimerHandle TimerHandle;

@@ -3,12 +3,14 @@
 
 #include "EnemyCharacter.h"
 
-#include "Ghost_SpecOps/Tasks/PatrolPath.h"
+#include "../Tasks/PatrolPath.h"
 #include "Components/SplineComponent.h"
 
 AEnemyCharacter::AEnemyCharacter() :
 	PatrolIndex(0),
 	CanSeePlayer(false),
+	bIsDead(false),
+	bShouldRetreat(false),
 	Health(100.f),
 	PatrolDirection(true)
 {

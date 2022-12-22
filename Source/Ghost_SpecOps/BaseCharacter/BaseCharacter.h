@@ -38,7 +38,6 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = DEFAULTS, Replicated)
 	bool bIsRunning;
 
-	// UPROPERTY(BlueprintReadWrite, Category = DEFAULTS, Replicated, VisibleAnywhere)
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = DEFAULTS, Replicated)
 	bool bIsAlive;
 

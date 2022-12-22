@@ -198,8 +198,8 @@ void APlayerCharacter::CalculateAimOffset(float DeltaTime)
 	if(AO_Pitch >= 90.f && !IsLocallyControlled())
 	{
 		//Map pitch from [270, 360) to [-90, 0)
-		FVector2d InRage(270.f, 360.f);
-		FVector2d OutRange(-90.f, 0.f);
+		const FVector2d InRage(270.f, 360.f);
+		const FVector2d OutRange(-90.f, 0.f);
 		AO_Pitch = FMath::GetMappedRangeValueClamped(InRage, OutRange, AO_Pitch);
 	}
 }
@@ -231,20 +231,23 @@ void APlayerCharacter::OnProneButtonPressed()
 		FHitResult HitResult;
 		bool bCanStandUp = GetWorld()->LineTraceSingleByChannel(HitResult, GetActorLocation(), UpVector, ECC_Visibility);
 
-		bIsProne = false;
-		bIsStanding = true;
-
-		GetCharacterMovement()->MaxWalkSpeed = 0.0f;
-
-		//"delay"
-		FTimerDelegate TimerCallback;
-		TimerCallback.BindLambda([&]
+		if(bCanStandUp)
 		{
-			GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
-		});
+			bIsProne = false;
+			bIsStanding = true;
 
-		FTimerHandle Handle;
-		GetWorld()->GetTimerManager().SetTimer(Handle, TimerCallback, 1.3f, false);
+			GetCharacterMovement()->MaxWalkSpeed = 0.0f;
+
+			//"delay"
+			FTimerDelegate TimerCallback;
+			TimerCallback.BindLambda([&]
+			{
+				GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
+			});
+
+			FTimerHandle Handle;
+			GetWorld()->GetTimerManager().SetTimer(Handle, TimerCallback, 1.3f, false);
+		}
 	}
 	else
 	{
@@ -285,11 +288,19 @@ bool APlayerCharacter::Server_OnProneButtonPressed_Validate()
 void APlayerCharacter::OnAimButtonPressed()
 {
 	SetAiming(true);
+	if(bIsInCover)
+	{
+		UnCrouch();
+	}
 }
 
 void APlayerCharacter::OnAimButtonReleased()
 {
 	SetAiming(false);
+	if(bIsInCover)
+	{
+		Crouch();
+	}
 }
 
 void APlayerCharacter::SetAiming(bool bInIsAiming)
@@ -319,12 +330,20 @@ void APlayerCharacter::OnADSButtonPressed()
 {
 	SetAds(true);
 	SetAiming(true);
+	if(bIsInCover)
+	{
+		UnCrouch();
+	}
 }
 
 void APlayerCharacter::OnADSButtonReleased()
 {
 	SetAds(false);
 	SetAiming(false);
+	if(bIsInCover)
+	{
+		Crouch();
+	}
 }
 
 void APlayerCharacter::SetAds(bool bInAds)
@@ -379,7 +398,7 @@ void APlayerCharacter::Server_SetRunning_Implementation(bool bInIsRunning)
 	bIsRunning = bInIsRunning;
 }
 
-bool APlayerCharacter::Server_SetRunning_Validate(bool bInIsrunning)
+bool APlayerCharacter::Server_SetRunning_Validate(bool bInRunning)
 {
 	return true;
 }

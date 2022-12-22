@@ -4,7 +4,6 @@
 #include "Ghost_SpecOps/Components/PlayerCombatComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
-#include "Net/UnrealNetwork.h"
 
 APlayerCharacter::APlayerCharacter()
 {
@@ -38,7 +37,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
 	PlayerInputComponent->BindAxis("MoveForward", this, &APlayerCharacter::MoveForward);
-	PlayerInputComponent->BindAxis("MoveRight", this, &APlayerCharacter::MoveRight);
+	// PlayerInputComponent->BindAxis("MoveRight", this, &APlayerCharacter::MoveRight);
 	PlayerInputComponent->BindAxis("LookUp", this, &APlayerCharacter::AddControllerPitchInput);
 	PlayerInputComponent->BindAxis("Turn", this, &APlayerCharacter::Turn);
 
@@ -82,7 +81,7 @@ void APlayerCharacter::PostInitializeComponents()
 
 void APlayerCharacter::MoveForward(float InAxisValue)
 {
-	if(Controller && InAxisValue)
+	if(Controller && InAxisValue && !bIsInCover)
 	{
 		if(bIsRunning && InAxisValue < 0.f)
 		{
@@ -125,12 +124,10 @@ void APlayerCharacter::TurnInPlace(float DeltaTime)
 	if(AO_Yaw > 90.f)
 	{
 		TurningInPlace = ETurningInPlace::ETIP_Right;
-		// AddControllerYawInput(10.f);
 	}
 	else if(AO_Yaw < -90.f)
 	{
 		TurningInPlace = ETurningInPlace::ETIP_Left;
-		// AddControllerYawInput(-10.f);
 	}
 
 	if(TurningInPlace != ETurningInPlace::ETIP_NotTurning)
@@ -173,7 +170,6 @@ void APlayerCharacter::CalculateAimOffset(float DeltaTime)
 	FVector Velocity = GetVelocity();
 	Velocity.Z = 0.f;
 	Speed = Velocity.Size();
-	// bool bIsInAir = GetCharacterMovement()->IsFalling();
 	
 	if(Speed == 0.f)
 	{
@@ -196,10 +192,8 @@ void APlayerCharacter::CalculateAimOffset(float DeltaTime)
 	}
 
 	AO_Pitch = GetBaseAimRotation().Pitch;
-
-	AO_Pitch = FMath::Clamp(AO_Pitch, -70.f, 70.f);
-	
-	UE_LOG(LogTemp, Warning, TEXT("Pitch: %f"), AO_Pitch);
+	AO_Pitch = FMath::Clamp(AO_Pitch, -55.f, 65.f);
+	UE_LOG(LogTemp, Warning, TEXT("Pitch: %f"), AO_Pitch)
 	
 	if(AO_Pitch >= 90.f && !IsLocallyControlled())
 	{
@@ -235,8 +229,7 @@ void APlayerCharacter::OnProneButtonPressed()
 		FVector UpVector = (UKismetMathLibrary::GetUpVector(ActorRotator) * FVector(0.f, 0.f, 180.f)) + GetActorLocation();
 
 		FHitResult HitResult;
-		bool bCanStandUp;
-		bCanStandUp = GetWorld()->LineTraceSingleByChannel(HitResult, GetActorLocation(), UpVector, ECC_Visibility);
+		bool bCanStandUp = GetWorld()->LineTraceSingleByChannel(HitResult, GetActorLocation(), UpVector, ECC_Visibility);
 
 		bIsProne = false;
 		bIsStanding = true;

@@ -35,6 +35,9 @@ private:
 
 	APlayerController* PlayerController;
 
+	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+	bool bIsInCover;
+
 protected:
 
 	FRotator StartingAimRotation;

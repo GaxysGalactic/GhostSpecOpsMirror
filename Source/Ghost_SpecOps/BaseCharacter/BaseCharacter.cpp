@@ -99,7 +99,10 @@ void ABaseCharacter::PlayFireMontage(bool bAiming) const
 
 void ABaseCharacter::MulticastPlayAnimMontage_Implementation(UAnimMontage* Montage)
 {
-	PlayAnimMontage(Montage);
+	if(!HasAuthority())
+	{
+		PlayAnimMontage(Montage);
+	}
 	//GetMesh()->GetAnimInstance()->OnMontageEnded.Broadcast();
 }
 

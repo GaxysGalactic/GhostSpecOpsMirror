@@ -2,7 +2,6 @@
 
 #include "BaseCharacter.h"
 #include "KismetAnimationLibrary.h"
-#include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 
 void UBaseCharacterAinmInstance::NativeInitializeAnimation()
@@ -60,6 +59,8 @@ void UBaseCharacterAinmInstance::NativeUpdateAnimation(float DeltaTime)
 			bIsLocallyControlled = true;
 			FTransform RightHandTransform = EquippedWeapon->GetWeaponMesh()->GetSocketTransform(FName("hand_r"), RTS_World);
 			RightHandRotation = UKismetMathLibrary::FindLookAtRotation(RightHandTransform.GetLocation(), RightHandTransform.GetLocation() + (RightHandTransform.GetLocation() - BaseCharacter->GetHitTarget()));
+			DistanceToTarget = (RightHandTransform.GetLocation() - BaseCharacter->GetHitTarget()).Size();
+
 
 			//...for debug
 			// FTransform MuzzleTipTransform = EquippedWeapon->GetWeaponMesh()->GetSocketTransform(FName("MuzzleFlash"), RTS_World);

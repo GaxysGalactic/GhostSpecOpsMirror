@@ -7,6 +7,7 @@
 
 class AWeapon;
 class UPlayerCombatComponent;
+class UAIPerceptionStimuliSourceComponent;
 
 UCLASS()
 class GHOST_SPECOPS_API ABaseCharacter : public ACharacter
@@ -19,6 +20,8 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void PostInitializeComponents() override;
 	void PlayFireMontage(bool bInAiming) const;
+
+	UAIPerceptionStimuliSourceComponent* AIPerception;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = DEFAULTS, Replicated)
 	bool bIsProne;

@@ -285,15 +285,24 @@ bool APlayerCharacter::Server_OnProneButtonPressed_Validate()
 void APlayerCharacter::OnAimButtonPressed()
 {
 	SetAiming(true);
+	if(bIsInCover)
+	{
+		Crouch();
+	}
 }
 
 void APlayerCharacter::OnAimButtonReleased()
 {
 	SetAiming(false);
+	if(bIsInCover)
+	{
+		UnCrouch();
+	}
 }
 
 void APlayerCharacter::SetAiming(bool bInIsAiming)
 {
+	
 	if(!bIsRunning)
 	{
 		bIsAiming = bInIsAiming;

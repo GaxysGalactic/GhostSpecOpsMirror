@@ -12,6 +12,7 @@ EStateTreeRunStatus UPlayAnimMontage::EnterState(FStateTreeExecutionContext& Con
 	ABaseCharacter* Character = Cast<ABaseCharacter>(Actor);
 	if(Character)
 	{
+		Character->PlayAnimMontage(AnimMontage);
 		Character->MulticastPlayAnimMontage(AnimMontage);
 		Character->GetWorldTimerManager().SetTimer(AnimationTimer, this, &UPlayAnimMontage::EndState, AnimMontage->GetPlayLength());
 

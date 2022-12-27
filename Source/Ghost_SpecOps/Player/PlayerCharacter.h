@@ -11,6 +11,8 @@
 class UCameraComponent;
 class USpringArmComponent;
 class UAnimMontage;
+class UAIPerceptionStimuliSourceComponent;
+
 
 UCLASS()
 class GHOST_SPECOPS_API APlayerCharacter : public ABaseCharacter
@@ -25,6 +27,8 @@ public:
 	virtual void PostInitializeComponents() override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return CameraComponent; }
+
+	UAIPerceptionStimuliSourceComponent* AIPerception;
 
 private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))

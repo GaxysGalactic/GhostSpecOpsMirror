@@ -4,6 +4,8 @@
 #include "Ghost_SpecOps/Components/PlayerCombatComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Perception/AIPerceptionStimuliSourceComponent.h"
+#include "Perception/AISense_Sight.h"
 
 APlayerCharacter::APlayerCharacter()
 {
@@ -23,6 +25,9 @@ APlayerCharacter::APlayerCharacter()
 
 	CombatComponent = CreateDefaultSubobject<UPlayerCombatComponent>(TEXT("CombatComponent"));
 	CombatComponent->SetIsReplicated(true);
+
+	AIPerception = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("AIPercention"));
+
 }
 
 void APlayerCharacter::BeginPlay()
@@ -30,6 +35,8 @@ void APlayerCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	PlayerController = UGameplayStatics::GetPlayerController(this, 0);
+	
+	AIPerception->RegisterForSense(TSubclassOf<UAISense_Sight>());
 }
 
 void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -192,7 +199,7 @@ void APlayerCharacter::CalculateAimOffset(float DeltaTime)
 	}
 
 	AO_Pitch = GetBaseAimRotation().Pitch;
-	AO_Pitch = FMath::Clamp(AO_Pitch, -55.f, 65.f);
+	// AO_Pitch = FMath::Clamp(AO_Pitch, -55.f, 65.f);
 	UE_LOG(LogTemp, Warning, TEXT("Pitch: %f"), AO_Pitch)
 	
 	if(AO_Pitch >= 90.f && !IsLocallyControlled())

@@ -2,6 +2,7 @@
 
 #include "BaseCharacter.h"
 #include "KismetAnimationLibrary.h"
+#include "Ghost_SpecOps/Player/PlayerCharacter.h"
 #include "Kismet/KismetMathLibrary.h"
 
 void UBaseCharacterAinmInstance::NativeInitializeAnimation()
@@ -9,6 +10,12 @@ void UBaseCharacterAinmInstance::NativeInitializeAnimation()
 	Super::NativeInitializeAnimation();
 
 	BaseCharacter = Cast<ABaseCharacter>(TryGetPawnOwner());
+
+	bIsPlayer = false;
+	if(Cast<APlayerCharacter>(TryGetPawnOwner()))
+	{
+		bIsPlayer = true;
+	}
 }
 
 void UBaseCharacterAinmInstance::NativeUpdateAnimation(float DeltaTime)

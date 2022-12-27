@@ -2,6 +2,7 @@
 
 #include "Components/BoxComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
+#include "Ghost_SpecOps/Player/PlayerCharacter.h"
 #include "Kismet/GameplayStatics.h"
 
 AProjectile::AProjectile()
@@ -44,8 +45,12 @@ void AProjectile::BeginPlay()
 	}
 }
 
-void AProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* HitActor, UPrimitiveComponent* OtherComp, FVector NormalImpolse, const FHitResult& InHit)
+void AProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* HitActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& InHit)
 {
+	if(HitActor && GetOwner())
+	{
+		UGameplayStatics::ApplyDamage(HitActor, 10.f, GetOwner()->GetInstigatorController(), this, TSubclassOf<UDamageType>());
+	}
 	Destroy();
 }
 

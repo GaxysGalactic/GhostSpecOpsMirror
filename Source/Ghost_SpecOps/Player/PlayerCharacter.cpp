@@ -305,6 +305,7 @@ void APlayerCharacter::OnAimButtonReleased()
 
 void APlayerCharacter::SetAiming(bool bInIsAiming)
 {
+	
 	if(!bIsRunning)
 	{
 		bIsAiming = bInIsAiming;

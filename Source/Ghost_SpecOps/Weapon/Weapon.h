@@ -8,6 +8,8 @@ class UStaticMeshComponent;
 class USkeletalMeshComponent;
 class UAnimationAsset;
 class UTexture2D;
+class USoundCue;
+class UParticleSystem;
 
 UCLASS()
 class GHOST_SPECOPS_API AWeapon : public AActor
@@ -40,6 +42,15 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	float ShootDamage;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon properties", meta = (AllowPrivateAccess = "true"))
+	USoundCue* FireSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon properties", meta = (AllowPrivateAccess = "true"))
+	UParticleSystem* MuzzleFlash;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon properties", meta = (AllowPrivateAccess = "true"))
+	UParticleSystem* ImpactParticles;
+
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<UDamageType> DamageType;
 	
@@ -63,7 +74,8 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	FORCEINLINE UStaticMeshComponent* GetWeaponMesh() const { return WeaponMesh; }
-
+	FORCEINLINE USoundCue* GetFireSound() const { return FireSound; }
+	FORCEINLINE UParticleSystem* GetMuzzleFlash() const { return MuzzleFlash; }
 	FORCEINLINE float GetZoomedFOV() const { return  ZoomedFOV; }
 	FORCEINLINE float GetZoomInterpSpeed() const { return  ZoomedFOV; }
 

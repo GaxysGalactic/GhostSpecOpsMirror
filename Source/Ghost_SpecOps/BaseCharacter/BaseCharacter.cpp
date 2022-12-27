@@ -1,9 +1,12 @@
 #include "BaseCharacter.h"
 
 #include "Components/CapsuleComponent.h"
+#include "Engine/StaticMeshSocket.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PawnMovementComponent.h"
 #include "Ghost_SpecOps/Components/PlayerCombatComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "Sound/SoundCue.h"
 #include "Net/UnrealNetwork.h"
 
 ABaseCharacter::ABaseCharacter()
@@ -78,19 +81,27 @@ void ABaseCharacter::Tick(float DeltaTime)
 void ABaseCharacter::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
-	// if(Combat)
-	// {
-	// 	Combat->PlayerCharacter = this;
-	// }
 }
 
 void ABaseCharacter::PlayFireMontage(bool bAiming) const
 {
-	if (!CombatComponent || !CurrentWeapon) return;
+	if (!CombatComponent || !CurrentWeapon || !CurrentWeapon->GetWeaponMesh()) return;
 
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (AnimInstance && FireWeaponMontage)
+	FTransform SocketTransform{};
+
+	const UStaticMeshSocket* BarrelSocket = CurrentWeapon->GetWeaponMesh()->GetSocketByName(FName("MuzzleFlash"));
+	if (AnimInstance && FireWeaponMontage && CurrentWeapon->GetFireSound() && CurrentWeapon->GetMuzzleFlash() && BarrelSocket)
 	{
+		BarrelSocket->GetSocketTransform(SocketTransform, CurrentWeapon->GetWeaponMesh());
+		UGameplayStatics::SpawnEmitterAtLocation(
+			GetWorld(),
+			CurrentWeapon->GetMuzzleFlash(),
+			SocketTransform
+			);
+		
+		UGameplayStatics::PlaySound2D(this, CurrentWeapon->GetFireSound());
+		
 		AnimInstance->Montage_Play(FireWeaponMontage);
 		const FName SectionName = bAiming ? FName("RifleAim") : FName("RifleHip");
 		AnimInstance->Montage_JumpToSection(SectionName);

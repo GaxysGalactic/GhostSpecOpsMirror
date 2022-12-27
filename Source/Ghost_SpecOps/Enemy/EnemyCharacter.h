@@ -18,6 +18,17 @@ public:
 
 	AEnemyCharacter();
 
+private:
+
+	virtual void BeginPlay() override;
+
+	/** Starts the State Tree Logic */
+	void StartStateTree() const;
+
+	/** Taking damage */
+	UFUNCTION()
+	void TakeDamage(AActor* DamagedActor, float Damage, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser);
+
 protected:
 
 	/** Path for the enemy to follow (or guard location) */
@@ -52,6 +63,10 @@ protected:
 	/** Death animation montage */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation)
 	class UAnimMontage* DeathMontage;
+
+	/** State Tree Logic */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	class UStateTreeComponent* StateTreeComponent;
 
 public:
 

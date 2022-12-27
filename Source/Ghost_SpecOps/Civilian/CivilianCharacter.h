@@ -26,6 +26,13 @@ private:
 	/** Switches the "desire" of the civilian to use a computer on their next State Tree runthrough, based on a timer */
 	void SwitchSchedule();
 
+	/** Starts the State Tree Logic */
+	void StartStateTree() const;
+
+	/** Taking damage */
+	UFUNCTION()
+	void TakeDamage(AActor* DamagedActor, float Damage, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser);
+
 protected:
 
 	/** Used for the "Cower" state / animation */
@@ -67,7 +74,9 @@ protected:
 	/** Gameplay tag container for activities civilian can use related to Smart Objects */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = SmartObjects)
 	FGameplayTagContainer SmartObjectActivities;
-
 	
+	/** State Tree Logic */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	class UStateTreeComponent* StateTreeComponent;
 	
 };

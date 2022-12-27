@@ -5,6 +5,7 @@
 
 #include "../Tasks/PatrolPath.h"
 #include "Components/SplineComponent.h"
+#include "Components/StateTreeComponent.h"
 
 AEnemyCharacter::AEnemyCharacter() :
 	PatrolIndex(0),
@@ -14,6 +15,44 @@ AEnemyCharacter::AEnemyCharacter() :
 	Health(100.f),
 	PatrolDirection(true)
 {
+	StateTreeComponent = CreateDefaultSubobject<UStateTreeComponent>(TEXT("State Tree"));
+
+	OnTakeAnyDamage.AddDynamic(this, &AEnemyCharacter::TakeDamage);
+}
+
+void AEnemyCharacter::BeginPlay()
+{
+	if(HasAuthority())
+	{
+		FTimerHandle StartLogicHandle;
+		GetWorldTimerManager().SetTimer(StartLogicHandle, this, &AEnemyCharacter::StartStateTree, 5.f, false);
+	}
+	Super::BeginPlay();
+}
+
+void AEnemyCharacter::StartStateTree() const
+{
+	StateTreeComponent->StartLogic();
+}
+
+void AEnemyCharacter::TakeDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType,
+                                 AController* InstigatedBy, AActor* DamageCauser)
+{
+	Health -= Damage;
+	if (Health <= 0)
+	{
+		bIsDead = true;
+		FGameplayTag DeathTag = DeathTag.RequestGameplayTag("Dead");
+		const FStateTreeEvent DeathEvent;
+		StateTreeComponent->SendStateTreeEvent(DeathEvent);
+	}
+	else if(Health <= 20)
+	{
+		bShouldRetreat = true;
+		FGameplayTag RetreatTag = RetreatTag.RequestGameplayTag("Retreat");
+		const FStateTreeEvent RetreatEvent;
+		StateTreeComponent->SendStateTreeEvent(RetreatEvent);
+	}
 	
 }
 

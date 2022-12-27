@@ -6,16 +6,24 @@
 #include "../Tasks/PatrolPath.h"
 #include "Components/SplineComponent.h"
 #include "Components/StateTreeComponent.h"
+#include "Ghost_SpecOps/Civilian/CivilianCharacter.h"
+#include "Ghost_SpecOps/Player/PlayerCharacter.h"
+#include "Perception/AIPerceptionComponent.h"
+#include "Perception/AIPerceptionStimuliSourceComponent.h"
+#include "Perception/AISense_Sight.h"
 
 AEnemyCharacter::AEnemyCharacter() :
 	PatrolIndex(0),
-	CanSeePlayer(false),
+	bCanSeePlayer(false),
 	bIsDead(false),
 	bShouldRetreat(false),
+	bIsAlert(false),
 	Health(100.f),
 	PatrolDirection(true)
 {
 	StateTreeComponent = CreateDefaultSubobject<UStateTreeComponent>(TEXT("State Tree"));
+	PerceptionComponent = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("Perception"));
+	StimuliSourceComponent = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("Stimulus"));
 
 	OnTakeAnyDamage.AddDynamic(this, &AEnemyCharacter::TakeDamage);
 }
@@ -45,6 +53,8 @@ void AEnemyCharacter::TakeDamage(AActor* DamagedActor, float Damage, const UDama
 		FGameplayTag DeathTag = DeathTag.RequestGameplayTag("Dead");
 		const FStateTreeEvent DeathEvent;
 		StateTreeComponent->SendStateTreeEvent(DeathEvent);
+		
+		StimuliSourceComponent->RegisterForSense(TSubclassOf<UAISense_Sight>());
 	}
 	else if(Health <= 20)
 	{
@@ -54,6 +64,32 @@ void AEnemyCharacter::TakeDamage(AActor* DamagedActor, float Damage, const UDama
 		StateTreeComponent->SendStateTreeEvent(RetreatEvent);
 	}
 	
+}
+
+void AEnemyCharacter::ProcessStimuli(AActor* Actor, FAIStimulus Stimulus)
+{
+	//Handle Vision
+	if(Stimulus.Type == UAISense::GetSenseID<UAISense_Sight>())
+	{
+		// Alert on seeing corpse
+		if(Cast<AEnemyCharacter>(Actor) || Cast<ACivilianCharacter>(Actor))
+		{
+			bIsAlert = true;
+			FGameplayTag Tag = Tag.RequestGameplayTag("Alert");
+			StateTreeComponent->SendStateTreeEvent(FStateTreeEvent(Tag));
+		}
+		// Chase
+		else if(Cast<APlayerCharacter>(Actor))
+		{
+			bCanSeePlayer = Stimulus.IsActive();
+			if(Stimulus.IsActive())
+			{
+				TargetLocation = Stimulus.StimulusLocation;
+				FGameplayTag Tag = Tag.RequestGameplayTag("Chase");
+				StateTreeComponent->SendStateTreeEvent(FStateTreeEvent(Tag));	
+			}
+		}
+	}
 }
 
 void AEnemyCharacter::UpdatePatrolIndex()

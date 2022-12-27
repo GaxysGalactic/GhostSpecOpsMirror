@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "../BaseCharacter/BaseCharacter.h"
+#include "Perception/AIPerceptionTypes.h"
 #include "EnemyCharacter.generated.h"
 
 /**
@@ -29,8 +30,12 @@ private:
 	UFUNCTION()
 	void TakeDamage(AActor* DamagedActor, float Damage, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser);
 
-protected:
+	/** Process incoming Perception Stimuli */
+	UFUNCTION()
+	void ProcessStimuli(AActor* Actor, FAIStimulus Stimulus);
 
+protected:
+	
 	/** Path for the enemy to follow (or guard location) */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class APatrolPath* PatrolPath;
@@ -41,7 +46,7 @@ protected:
 
 	/** Enemy sees player or remembers seeing them */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool CanSeePlayer;
+	bool bCanSeePlayer;
 
 	/** Used for death state */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
@@ -50,6 +55,14 @@ protected:
 	/** Used for flee state */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	bool bShouldRetreat;
+
+	/** Used for investigate state */
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	bool bIsAlert;
+
+	/** For chasing player */
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	FVector TargetLocation;
 
 	/** Current health */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -67,6 +80,14 @@ protected:
 	/** State Tree Logic */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	class UStateTreeComponent* StateTreeComponent;
+
+	/** AI Perception Component */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	class UAIPerceptionComponent* PerceptionComponent;
+
+	/** AI Perception Stimuli Source Component */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	class UAIPerceptionStimuliSourceComponent* StimuliSourceComponent;
 
 public:
 

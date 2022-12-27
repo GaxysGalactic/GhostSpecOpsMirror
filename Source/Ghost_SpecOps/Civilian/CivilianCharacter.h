@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "../BaseCharacter/BaseCharacter.h"
 #include "GameplayTagContainer.h"
+#include "Perception/AIPerceptionTypes.h"
 #include "CivilianCharacter.generated.h"
 
 /**
@@ -32,6 +33,10 @@ private:
 	/** Taking damage */
 	UFUNCTION()
 	void TakeDamage(AActor* DamagedActor, float Damage, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser);
+
+	/** Process incoming Perception Stimuli */
+	UFUNCTION()
+	void ProcessStimuli(AActor* Actor, FAIStimulus Stimulus);
 
 protected:
 
@@ -78,5 +83,13 @@ protected:
 	/** State Tree Logic */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	class UStateTreeComponent* StateTreeComponent;
+
+	/** AI Perception Component */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	class UAIPerceptionComponent* PerceptionComponent;
+
+	/** AI Perception Stimuli Source Component */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	class UAIPerceptionStimuliSourceComponent* StimuliSourceComponent;
 	
 };

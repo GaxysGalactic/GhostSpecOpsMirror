@@ -3,6 +3,10 @@
 
 #include "CivilianCharacter.h"
 #include "Components/StateTreeComponent.h"
+#include "Ghost_SpecOps/Enemy/EnemyCharacter.h"
+#include "Perception/AIPerceptionComponent.h"
+#include "Perception/AIPerceptionStimuliSourceComponent.h"
+#include "Perception/AISense_Sight.h"
 
 ACivilianCharacter::ACivilianCharacter() :
 	bIsFrightened(false),
@@ -14,8 +18,11 @@ ACivilianCharacter::ACivilianCharacter() :
 	SearchRadius(3000.f)
 {
 	StateTreeComponent = CreateDefaultSubobject<UStateTreeComponent>(TEXT("State Tree"));
+	PerceptionComponent = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("Perception"));
+	StimuliSourceComponent = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("Stimulus"));
 
 	OnTakeAnyDamage.AddDynamic(this, &ACivilianCharacter::TakeDamage);
+	PerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this, &ACivilianCharacter::ProcessStimuli);
 }
 
 void ACivilianCharacter::BeginPlay()
@@ -44,6 +51,22 @@ void ACivilianCharacter::TakeDamage(AActor* DamagedActor, float Damage, const UD
 {
 	bIsDead = true;
 	const FGameplayTag Tag = Tag.RequestGameplayTag("Dead");
-	const FStateTreeEvent Event(Tag);
-	StateTreeComponent->SendStateTreeEvent(Event);
+	StateTreeComponent->SendStateTreeEvent(FStateTreeEvent(Tag));
+	StimuliSourceComponent->RegisterForSense(TSubclassOf<UAISense_Sight>());
 }
+
+void ACivilianCharacter::ProcessStimuli(AActor* Actor, FAIStimulus Stimulus)
+{
+	//Handle Vision
+	if(Stimulus.Type == UAISense::GetSenseID<UAISense_Sight>())
+	{
+		// Frighten on seeing corpse
+		if(Cast<AEnemyCharacter>(Actor) || Cast<ACivilianCharacter>(Actor))
+		{
+			bIsFrightened = true;
+			FGameplayTag Tag = Tag.RequestGameplayTag("Flee");
+			StateTreeComponent->SendStateTreeEvent(FStateTreeEvent(Tag));
+		}
+	}
+}
+

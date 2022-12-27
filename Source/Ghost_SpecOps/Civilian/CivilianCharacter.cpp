@@ -6,6 +6,7 @@
 #include "Ghost_SpecOps/Enemy/EnemyCharacter.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
+#include "Perception/AISense_Hearing.h"
 #include "Perception/AISense_Sight.h"
 
 ACivilianCharacter::ACivilianCharacter() :
@@ -52,12 +53,13 @@ void ACivilianCharacter::TakeDamage(AActor* DamagedActor, float Damage, const UD
 	bIsDead = true;
 	const FGameplayTag Tag = Tag.RequestGameplayTag("Dead");
 	StateTreeComponent->SendStateTreeEvent(FStateTreeEvent(Tag));
+	// Register corpse for visual perception
 	StimuliSourceComponent->RegisterForSense(TSubclassOf<UAISense_Sight>());
 }
 
 void ACivilianCharacter::ProcessStimuli(AActor* Actor, FAIStimulus Stimulus)
 {
-	//Handle Vision
+	// Handle Vision
 	if(Stimulus.Type == UAISense::GetSenseID<UAISense_Sight>())
 	{
 		// Frighten on seeing corpse
@@ -67,6 +69,14 @@ void ACivilianCharacter::ProcessStimuli(AActor* Actor, FAIStimulus Stimulus)
 			FGameplayTag Tag = Tag.RequestGameplayTag("Flee");
 			StateTreeComponent->SendStateTreeEvent(FStateTreeEvent(Tag));
 		}
+	}
+	// Handle Hearing
+	else if(Stimulus.Type == UAISense::GetSenseID<UAISense_Hearing>())
+	{
+		// Frighten on hearing gunfire
+		bIsFrightened = true;
+		FGameplayTag Tag = Tag.RequestGameplayTag("Flee");
+		StateTreeComponent->SendStateTreeEvent(FStateTreeEvent(Tag));
 	}
 }
 

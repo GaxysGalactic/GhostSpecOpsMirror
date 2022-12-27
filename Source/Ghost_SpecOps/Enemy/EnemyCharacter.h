@@ -34,6 +34,12 @@ private:
 	UFUNCTION()
 	void ProcessStimuli(AActor* Actor, FAIStimulus Stimulus);
 
+	/** Send Alert event to State Tree */
+	void Alert() const;
+
+	/** Send Chase event to State Tree */
+	void Chase() const;
+
 protected:
 	
 	/** Path for the enemy to follow (or guard location) */
@@ -56,13 +62,17 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	bool bShouldRetreat;
 
-	/** Used for investigate state */
+	/** Used when seeing a corpse */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-	bool bIsAlert;
+	bool bIsPermanentlyAlert;
 
-	/** For chasing player */
+	/** For investigation */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	FVector TargetLocation;
+
+	/** For chasing / attacking */
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	AActor* AggroTarget;
 
 	/** Current health */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

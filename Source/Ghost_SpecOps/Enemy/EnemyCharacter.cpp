@@ -10,6 +10,7 @@
 #include "Ghost_SpecOps/Player/PlayerCharacter.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
+#include "Perception/AISense_Hearing.h"
 #include "Perception/AISense_Sight.h"
 
 AEnemyCharacter::AEnemyCharacter() :
@@ -17,7 +18,7 @@ AEnemyCharacter::AEnemyCharacter() :
 	bCanSeePlayer(false),
 	bIsDead(false),
 	bShouldRetreat(false),
-	bIsAlert(false),
+	bIsPermanentlyAlert(false),
 	Health(100.f),
 	PatrolDirection(true)
 {
@@ -26,6 +27,7 @@ AEnemyCharacter::AEnemyCharacter() :
 	StimuliSourceComponent = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("Stimulus"));
 
 	OnTakeAnyDamage.AddDynamic(this, &AEnemyCharacter::TakeDamage);
+	PerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this, &AEnemyCharacter::ProcessStimuli);
 }
 
 void AEnemyCharacter::BeginPlay()
@@ -68,28 +70,56 @@ void AEnemyCharacter::TakeDamage(AActor* DamagedActor, float Damage, const UDama
 
 void AEnemyCharacter::ProcessStimuli(AActor* Actor, FAIStimulus Stimulus)
 {
-	//Handle Vision
+	// Handle Vision
 	if(Stimulus.Type == UAISense::GetSenseID<UAISense_Sight>())
 	{
-		// Alert on seeing corpse
-		if(Cast<AEnemyCharacter>(Actor) || Cast<ACivilianCharacter>(Actor))
+		// Permanently Alert on seeing corpse
+		if(Stimulus.IsActive() && !bIsPermanentlyAlert && (Cast<AEnemyCharacter>(Actor) || Cast<ACivilianCharacter>(Actor)))
 		{
-			bIsAlert = true;
-			FGameplayTag Tag = Tag.RequestGameplayTag("Alert");
-			StateTreeComponent->SendStateTreeEvent(FStateTreeEvent(Tag));
+			bIsPermanentlyAlert = true;
+			TargetLocation = Stimulus.StimulusLocation;
+			Alert();
 		}
 		// Chase
 		else if(Cast<APlayerCharacter>(Actor))
 		{
 			bCanSeePlayer = Stimulus.IsActive();
-			if(Stimulus.IsActive())
+			if(Stimulus.IsActive() && !AggroTarget)
 			{
+				AggroTarget = Actor;
+				Chase();
+			}
+			// If vision lost, investigate around area
+			else if(Stimulus.IsActive())
+			{
+				AggroTarget = nullptr;
 				TargetLocation = Stimulus.StimulusLocation;
-				FGameplayTag Tag = Tag.RequestGameplayTag("Chase");
-				StateTreeComponent->SendStateTreeEvent(FStateTreeEvent(Tag));	
+				Alert();
 			}
 		}
 	}
+	// Handle Hearing
+	else if (Stimulus.Type == UAISense::GetSenseID<UAISense_Hearing>())
+	{
+		// Investigate
+		if(Stimulus.IsActive() && !bCanSeePlayer)
+		{
+			TargetLocation = Stimulus.StimulusLocation;
+			Alert();
+		}
+	}
+}
+
+void AEnemyCharacter::Alert() const
+{
+	FGameplayTag Tag = Tag.RequestGameplayTag("Alert");
+	StateTreeComponent->SendStateTreeEvent(FStateTreeEvent(Tag));
+}
+
+void AEnemyCharacter::Chase() const
+{
+	FGameplayTag Tag = Tag.RequestGameplayTag("Chase");
+	StateTreeComponent->SendStateTreeEvent(FStateTreeEvent(Tag));	
 }
 
 void AEnemyCharacter::UpdatePatrolIndex()

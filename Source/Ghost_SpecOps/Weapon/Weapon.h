@@ -72,6 +72,13 @@ public:
 	UPROPERTY(EditAnywhere, Category = Crosshairs)
 	UTexture2D* CrosshairsLeft;
 
+
+	//Automatic fire variables
+	UPROPERTY(EditAnywhere, Category = combat)
+	float FireDelay = 0.3;
+	UPROPERTY(EditAnywhere, Category = combat)
+	bool bIsAutomatic = true;
+
 	UFUNCTION(BlueprintCallable)
 	FORCEINLINE UStaticMeshComponent* GetWeaponMesh() const { return WeaponMesh; }
 	FORCEINLINE USoundCue* GetFireSound() const { return FireSound; }

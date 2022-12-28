@@ -42,6 +42,65 @@ void UPlayerCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	}
 }
 
+void UPlayerCombatComponent::Fire()
+{
+	if (bCanFire)
+	{
+		bCanFire = false;
+		ServerFire(HitTarget);
+		CrosshairShootingFactor += 0.75f;
+		CrosshairShootingFactor = FMath::Clamp(CrosshairShootingFactor, 0.f, 1.f);
+
+		StartFireTimer();
+	}
+}
+
+void UPlayerCombatComponent::FireButtonPressed(bool bPressed)
+{
+	bFireButtonPressed = bPressed;
+	if (bFireButtonPressed)
+	{
+		Fire();
+	}
+}
+
+void UPlayerCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& InTraceHitTarget)
+{
+	MulticastFire(InTraceHitTarget);
+}
+
+void UPlayerCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& InTraceHitTarget)
+{
+	if (PlayerCharacter->GetWeapon() == nullptr) return;
+	if (PlayerCharacter)
+	{
+		PlayerCharacter->PlayFireMontage(PlayerCharacter->bIsAiming);
+		PlayerCharacter->GetWeapon()->Fire(InTraceHitTarget);
+	}
+}
+
+void UPlayerCombatComponent::StartFireTimer()
+{
+	if(PlayerCharacter && PlayerCharacter->GetWeapon() )
+	{
+		PlayerCharacter->GetWorldTimerManager().SetTimer(
+			FireTimer,
+			this,
+			&UPlayerCombatComponent::FinishFireTimer,
+			PlayerCharacter->GetWeapon()->FireDelay
+		);
+	}
+}
+
+void UPlayerCombatComponent::FinishFireTimer()
+{
+	bCanFire = true;
+	if(bFireButtonPressed && PlayerCharacter->GetWeapon()->bIsAutomatic)
+	{
+		Fire();
+	}
+}
+
 void UPlayerCombatComponent::SetHUDCrosshairs(float DeltaTime)
 {
 	if(!PlayerCharacter || !PlayerCharacter->Controller)
@@ -83,16 +142,20 @@ void UPlayerCombatComponent::SetHUDCrosshairs(float DeltaTime)
 
 			if(PlayerCharacter->bIsAiming)
 			{
-				CrosshairAimFactor = FMath::FInterpTo(CrosshairAimFactor, 0.6f, DeltaTime, 30.f);
+				CrosshairAimFactor = FMath::FInterpTo(CrosshairAimFactor, 0.58f, DeltaTime, 30.f);
 			}
 			else
 			{
 				CrosshairAimFactor = FMath::FInterpTo(CrosshairAimFactor, 0.f, DeltaTime, 30.f);
 			}
-			
+
+			CrosshairShootingFactor = FMath::FInterpTo(CrosshairShootingFactor, 0.f, DeltaTime, 40.f);
+
 			HUDPackage.CrosshairSpread =
+				0.5f +
 				CrosshairVelocityFactor -
-					CrosshairAimFactor;
+				CrosshairAimFactor +
+				CrosshairShootingFactor;
 			
 			HUD->SetHudPackage(HUDPackage);
 
@@ -168,31 +231,5 @@ void UPlayerCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitResult)
 				FColor::Red
 			);
 		}
-	}
-}
-
-void UPlayerCombatComponent::FireButtonPressed(bool bPressed)
-{
-	bFireButtonPressed = bPressed;
-	if (bFireButtonPressed)
-	{
-		FHitResult HitResult;
-		TraceUnderCrosshairs(HitResult);
-		ServerFire(HitResult.ImpactPoint);
-	}
-}
-
-void UPlayerCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& InTraceHitTarget)
-{
-	MulticastFire(InTraceHitTarget);
-}
-
-void UPlayerCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& InTraceHitTarget)
-{
-	if (PlayerCharacter->GetWeapon() == nullptr) return;
-	if (PlayerCharacter)
-	{
-		PlayerCharacter->PlayFireMontage(PlayerCharacter->bIsAiming);
-		PlayerCharacter->GetWeapon()->Fire(InTraceHitTarget);
 	}
 }

@@ -18,10 +18,12 @@ ACivilianCharacter::ACivilianCharacter() :
 	MoveRadius(1000.f),
 	SearchRadius(3000.f)
 {
+	// Components
 	StateTreeComponent = CreateDefaultSubobject<UStateTreeComponent>(TEXT("State Tree"));
 	PerceptionComponent = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("Perception"));
 	StimuliSourceComponent = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("Stimulus"));
 
+	// Delegate Binding
 	OnTakeAnyDamage.AddDynamic(this, &ACivilianCharacter::TakeDamage);
 	PerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this, &ACivilianCharacter::ProcessStimuli);
 }
@@ -53,8 +55,6 @@ void ACivilianCharacter::TakeDamage(AActor* DamagedActor, float Damage, const UD
 	bIsDead = true;
 	const FGameplayTag Tag = Tag.RequestGameplayTag("Dead");
 	StateTreeComponent->SendStateTreeEvent(FStateTreeEvent(Tag));
-	// Register corpse for visual perception
-	StimuliSourceComponent->RegisterForSense(TSubclassOf<UAISense_Sight>());
 }
 
 void ACivilianCharacter::ProcessStimuli(AActor* Actor, FAIStimulus Stimulus)
@@ -63,11 +63,28 @@ void ACivilianCharacter::ProcessStimuli(AActor* Actor, FAIStimulus Stimulus)
 	if(Stimulus.Type == UAISense::GetSenseID<UAISense_Sight>())
 	{
 		// Frighten on seeing corpse
-		if(Cast<AEnemyCharacter>(Actor) || Cast<ACivilianCharacter>(Actor))
+		if(Actor->IsA<AEnemyCharacter>() || Actor->IsA<ACivilianCharacter>())
 		{
-			bIsFrightened = true;
-			FGameplayTag Tag = Tag.RequestGameplayTag("Flee");
-			StateTreeComponent->SendStateTreeEvent(FStateTreeEvent(Tag));
+			if(Actor->IsA<AEnemyCharacter>())
+			{
+				AEnemyCharacter* Enemy = Cast<AEnemyCharacter>(Actor);
+				if(Enemy->IsDead())
+				{
+					bIsFrightened = true;
+					FGameplayTag Tag = Tag.RequestGameplayTag("Flee");
+					StateTreeComponent->SendStateTreeEvent(FStateTreeEvent(Tag));
+				}
+			}
+			else
+			{
+				ACivilianCharacter* Civilian = Cast<ACivilianCharacter>(Actor);
+				if(Civilian->IsDead())
+				{
+					bIsFrightened = true;
+					FGameplayTag Tag = Tag.RequestGameplayTag("Flee");
+					StateTreeComponent->SendStateTreeEvent(FStateTreeEvent(Tag));
+				}
+			}
 		}
 	}
 	// Handle Hearing

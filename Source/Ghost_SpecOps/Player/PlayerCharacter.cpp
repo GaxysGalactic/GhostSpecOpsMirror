@@ -200,7 +200,7 @@ void APlayerCharacter::CalculateAimOffset(float DeltaTime)
 
 	AO_Pitch = GetBaseAimRotation().Pitch;
 	// AO_Pitch = FMath::Clamp(AO_Pitch, -55.f, 65.f);
-	UE_LOG(LogTemp, Warning, TEXT("Pitch: %f"), AO_Pitch)
+	//UE_LOG(LogTemp, Warning, TEXT("Pitch: %f"), AO_Pitch)
 	
 	if(AO_Pitch >= 90.f && !IsLocallyControlled())
 	{

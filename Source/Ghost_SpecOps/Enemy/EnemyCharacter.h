@@ -30,6 +30,9 @@ private:
 	UFUNCTION()
 	void TakeDamage(AActor* DamagedActor, float Damage, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser);
 
+	/** Process visual stimuli */
+	void ProcessVision(AActor* Actor, FAIStimulus Stimulus);
+
 	/** Process incoming Perception Stimuli */
 	UFUNCTION()
 	void ProcessStimuli(AActor* Actor, FAIStimulus Stimulus);
@@ -51,7 +54,7 @@ protected:
 	int32 PatrolIndex;
 
 	/** Enemy sees player or remembers seeing them */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	bool bCanSeePlayer;
 
 	/** Used for death state */
@@ -72,14 +75,14 @@ protected:
 
 	/** For chasing / attacking */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-	AActor* AggroTarget;
+	TArray<AActor*> AggroList;
 
 	/** Current health */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float Health;
 
-	/** Direction of patrol. Only really useful when patrol doesn't cycle */
-	/** True - Forwards, False - Backwards */
+	/** Direction of patrol. Only really useful when patrol doesn't cycle.
+	True - Forwards, False - Backwards */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool PatrolDirection;
 
@@ -100,6 +103,10 @@ protected:
 	class UAIPerceptionStimuliSourceComponent* StimuliSourceComponent;
 
 public:
+
+	bool IsDead() const { return bIsDead; }
+
+	bool CanSeePlayer() const { return bCanSeePlayer; }
 
 	/** Returns the patrol path */
 	APatrolPath* GetPatrolPath() const { return PatrolPath; }

@@ -91,5 +91,9 @@ protected:
 	/** AI Perception Stimuli Source Component */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	class UAIPerceptionStimuliSourceComponent* StimuliSourceComponent;
+
+public:
+
+	bool IsDead() const { return bIsDead; }
 	
 };

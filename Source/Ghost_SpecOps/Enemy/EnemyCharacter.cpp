@@ -3,6 +3,7 @@
 
 #include "EnemyCharacter.h"
 
+#include "AIController.h"
 #include "../Tasks/PatrolPath.h"
 #include "Components/SplineComponent.h"
 #include "Components/StateTreeComponent.h"
@@ -22,10 +23,12 @@ AEnemyCharacter::AEnemyCharacter() :
 	Health(100.f),
 	PatrolDirection(true)
 {
+	// Components
 	StateTreeComponent = CreateDefaultSubobject<UStateTreeComponent>(TEXT("State Tree"));
 	PerceptionComponent = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("Perception"));
 	StimuliSourceComponent = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("Stimulus"));
 
+	// Delegate Binding
 	OnTakeAnyDamage.AddDynamic(this, &AEnemyCharacter::TakeDamage);
 	PerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this, &AEnemyCharacter::ProcessStimuli);
 }
@@ -49,23 +52,101 @@ void AEnemyCharacter::TakeDamage(AActor* DamagedActor, float Damage, const UDama
                                  AController* InstigatedBy, AActor* DamageCauser)
 {
 	Health -= Damage;
+	// Death
 	if (Health <= 0)
 	{
 		bIsDead = true;
 		FGameplayTag DeathTag = DeathTag.RequestGameplayTag("Dead");
-		const FStateTreeEvent DeathEvent;
+		const FStateTreeEvent DeathEvent(DeathTag);
 		StateTreeComponent->SendStateTreeEvent(DeathEvent);
-		
-		StimuliSourceComponent->RegisterForSense(TSubclassOf<UAISense_Sight>());
 	}
+	// Retreat
 	else if(Health <= 20)
 	{
 		bShouldRetreat = true;
 		FGameplayTag RetreatTag = RetreatTag.RequestGameplayTag("Retreat");
-		const FStateTreeEvent RetreatEvent;
+		const FStateTreeEvent RetreatEvent(RetreatTag);
 		StateTreeComponent->SendStateTreeEvent(RetreatEvent);
 	}
 	
+}
+
+void AEnemyCharacter::ProcessVision(AActor* Actor, FAIStimulus Stimulus)
+{
+	// Permanently Alert on seeing corpse
+	if(Stimulus.IsActive() && !bIsPermanentlyAlert && (Actor->IsA<AEnemyCharacter>() || Actor->IsA<ACivilianCharacter>()))
+	{
+		if(Actor->IsA<AEnemyCharacter>())
+		{
+			AEnemyCharacter* Enemy = Cast<AEnemyCharacter>(Actor);
+			if(Enemy->IsDead())
+			{
+				bIsPermanentlyAlert = true;
+				TargetLocation = Stimulus.StimulusLocation;
+				Alert();
+			}
+		}
+		else
+		{
+			ACivilianCharacter* Civilian = Cast<ACivilianCharacter>(Actor);
+			if(Civilian->IsDead())
+			{
+				bIsPermanentlyAlert = true;
+				TargetLocation = Stimulus.StimulusLocation;
+				Alert();
+			}
+		}
+	}
+	// Player-sourced stimuli
+	else if(Actor->IsA<APlayerCharacter>())
+	{
+		// Player enters vision
+		if(Stimulus.IsActive())
+		{
+			const bool bFirstAggro = AggroList.IsEmpty();
+			AggroList.Add(Actor);
+			if(bFirstAggro)
+			{
+				Chase();
+			}
+		}
+		// Player exits vision
+		else if(!Stimulus.IsActive())
+		{
+			AggroList.Remove(Actor);
+
+			// If vision lost on all players, investigate around area
+			if(AggroList.IsEmpty())
+			{
+				TargetLocation = Stimulus.StimulusLocation;
+				Alert();
+			}
+		}
+
+		if(!AggroList.IsEmpty())
+		{
+			AAIController* AIController = Cast<AAIController>(GetController());
+			if(AIController)
+			{
+				AIController->SetFocus(AggroList[0]);
+			}
+		}
+		else
+		{
+			AAIController* AIController = Cast<AAIController>(GetController());
+			if(AIController)
+			{
+				AIController->ClearFocus(EAIFocusPriority::Gameplay);
+			}
+		}
+		
+		// Update CanSeePlayer variable
+		bCanSeePlayer = !AggroList.IsEmpty();
+		if(bCanSeePlayer)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("CanSeePlayer"));
+		}
+	}
 }
 
 void AEnemyCharacter::ProcessStimuli(AActor* Actor, FAIStimulus Stimulus)
@@ -73,30 +154,7 @@ void AEnemyCharacter::ProcessStimuli(AActor* Actor, FAIStimulus Stimulus)
 	// Handle Vision
 	if(Stimulus.Type == UAISense::GetSenseID<UAISense_Sight>())
 	{
-		// Permanently Alert on seeing corpse
-		if(Stimulus.IsActive() && !bIsPermanentlyAlert && (Cast<AEnemyCharacter>(Actor) || Cast<ACivilianCharacter>(Actor)))
-		{
-			bIsPermanentlyAlert = true;
-			TargetLocation = Stimulus.StimulusLocation;
-			Alert();
-		}
-		// Chase
-		else if(Cast<APlayerCharacter>(Actor))
-		{
-			bCanSeePlayer = Stimulus.IsActive();
-			if(Stimulus.IsActive() && !AggroTarget)
-			{
-				AggroTarget = Actor;
-				Chase();
-			}
-			// If vision lost, investigate around area
-			else if(Stimulus.IsActive())
-			{
-				AggroTarget = nullptr;
-				TargetLocation = Stimulus.StimulusLocation;
-				Alert();
-			}
-		}
+		ProcessVision(Actor, Stimulus);
 	}
 	// Handle Hearing
 	else if (Stimulus.Type == UAISense::GetSenseID<UAISense_Hearing>())
@@ -112,13 +170,13 @@ void AEnemyCharacter::ProcessStimuli(AActor* Actor, FAIStimulus Stimulus)
 
 void AEnemyCharacter::Alert() const
 {
-	FGameplayTag Tag = Tag.RequestGameplayTag("Alert");
+	const FGameplayTag Tag = Tag.RequestGameplayTag("Alert");
 	StateTreeComponent->SendStateTreeEvent(FStateTreeEvent(Tag));
 }
 
 void AEnemyCharacter::Chase() const
 {
-	FGameplayTag Tag = Tag.RequestGameplayTag("Chase");
+	const FGameplayTag Tag = Tag.RequestGameplayTag("Chase");
 	StateTreeComponent->SendStateTreeEvent(FStateTreeEvent(Tag));	
 }
 

@@ -80,7 +80,19 @@ void UPlayerCombatComponent::SetHUDCrosshairs(float DeltaTime)
 			Velocity.Z = 0.f;
 
 			CrosshairVelocityFactor = FMath::GetMappedRangeValueClamped(WalkSpeedRange, VelocityMultiplierRange, Velocity.Size());
-			HUDPackage.CrosshairSpread = CrosshairVelocityFactor;
+
+			if(PlayerCharacter->bIsAiming)
+			{
+				CrosshairAimFactor = FMath::FInterpTo(CrosshairAimFactor, 0.6f, DeltaTime, 30.f);
+			}
+			else
+			{
+				CrosshairAimFactor = FMath::FInterpTo(CrosshairAimFactor, 0.f, DeltaTime, 30.f);
+			}
+			
+			HUDPackage.CrosshairSpread =
+				CrosshairVelocityFactor -
+					CrosshairAimFactor;
 			
 			HUD->SetHudPackage(HUDPackage);
 

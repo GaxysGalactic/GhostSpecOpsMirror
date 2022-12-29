@@ -43,7 +43,7 @@ void ABaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 	DOREPLIFETIME(ABaseCharacter, bIsRunning);
 	DOREPLIFETIME(ABaseCharacter, bIsProne);
 	DOREPLIFETIME(ABaseCharacter, bIsStanding);
-	DOREPLIFETIME(ABaseCharacter, BaseHealth);
+	DOREPLIFETIME(ABaseCharacter, Health);
 
 }
 

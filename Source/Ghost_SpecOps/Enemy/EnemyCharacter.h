@@ -83,10 +83,6 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = AILogic, Replicated)
 	TArray<AActor*> AggroList;
 
-	/** Current health */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AILogic, Replicated)
-	float Health;
-
 	/** Direction of patrol. Only really useful when patrol doesn't cycle.
 	True - Forwards, False - Backwards */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AILogic, Replicated)

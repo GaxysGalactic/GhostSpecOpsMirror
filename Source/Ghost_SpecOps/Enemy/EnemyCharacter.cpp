@@ -24,7 +24,6 @@ AEnemyCharacter::AEnemyCharacter() :
 	bCanSeePlayer(false),
 	bShouldRetreat(false),
 	bIsPermanentlyAlert(false),
-	Health(100.f),
 	PatrolDirection(true)
 {
 	// Components

@@ -38,7 +38,7 @@ void APlayerCharacter::BeginPlay()
 	PlayerController = Cast<AGhostPlayerController>(Controller);
 	if(PlayerController)
 	{
-		PlayerController->SetHUDHealt(BaseHealth, MaxHealth);
+		PlayerController->SetHUDHealt(Health, MaxHealth);
 	}
 	
 	AIPerception->RegisterForSense(TSubclassOf<UAISense_Sight>());

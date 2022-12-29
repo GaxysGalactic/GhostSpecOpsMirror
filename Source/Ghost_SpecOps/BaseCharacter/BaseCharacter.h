@@ -59,8 +59,8 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Player stats")
 	float MaxHealth = 100.f;
 
-	UPROPERTY(ReplicatedUsing = OnRep_Health, VisibleAnywhere, Category = "Player Stats")
-	float BaseHealth = 100.f;
+	UPROPERTY(ReplicatedUsing = OnRep_Health, EditAnywhere, Category = "Player Stats")
+	float Health = 100.f;
 
 	UFUNCTION()
 	void OnRep_Health();

@@ -12,7 +12,7 @@
 				"Engine",
 				"AIModule",
 				"StateTreeModule",
-				"UMG"
+				"GameplayBehaviorsModule"
 			]
 		}
 	],

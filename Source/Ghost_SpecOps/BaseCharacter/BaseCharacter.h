@@ -94,4 +94,7 @@ public:
 	FORCEINLINE ETurningInPlace GetTurningInPlace() const { return TurningInPlace;}
 	FVector GetHitTarget() const; 
 
+	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, WithValidation, Category = Animation)
+	void MulticastPlayAnimMontage(class UAnimMontage* Montage);
+
 };

@@ -17,6 +17,8 @@ class GHOST_SPECOPS_API URunEQSQuery : public UStateTreeTaskBlueprintBase
 
 	virtual EStateTreeRunStatus EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) override;
 
+	virtual EStateTreeRunStatus Tick(FStateTreeExecutionContext& Context, const float DeltaTime) override;
+
 public:
 	
 	void FinishQuery(TSharedPtr<FEnvQueryResult> Result);
@@ -42,4 +44,7 @@ protected:
 	/** Output boolean. Useful for later tasks */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Output")
 	bool bIsFinished;
+
+	/** To end state early */
+	bool bFailed;
 };

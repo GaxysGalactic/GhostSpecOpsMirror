@@ -111,6 +111,20 @@ void ABaseCharacter::PlayFireMontage(bool bAiming) const
 	}
 }
 
+void ABaseCharacter::MulticastPlayAnimMontage_Implementation(UAnimMontage* Montage)
+{
+	if(!HasAuthority())
+	{
+		PlayAnimMontage(Montage);
+	}
+	//GetMesh()->GetAnimInstance()->OnMontageEnded.Broadcast();
+}
+
+bool ABaseCharacter::MulticastPlayAnimMontage_Validate(UAnimMontage* Montage)
+{
+	return true;
+}
+
 
 
 

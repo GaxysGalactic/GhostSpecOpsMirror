@@ -4,6 +4,7 @@
 #include "CivilianCharacter.h"
 #include "Components/StateTreeComponent.h"
 #include "Ghost_SpecOps/Enemy/EnemyCharacter.h"
+#include "Net/UnrealNetwork.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "Perception/AISense_Hearing.h"
@@ -23,8 +24,20 @@ ACivilianCharacter::ACivilianCharacter() :
 	StimuliSourceComponent = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("Stimulus"));
 
 	// Delegate Binding
-	OnTakeAnyDamage.AddDynamic(this, &ACivilianCharacter::TakeDamage);
 	PerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this, &ACivilianCharacter::ProcessStimuli);
+}
+
+void ACivilianCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ACivilianCharacter, bIsFrightened)
+	DOREPLIFETIME(ACivilianCharacter, bIsEssential)
+	DOREPLIFETIME(ACivilianCharacter, bUseComputer)
+	DOREPLIFETIME(ACivilianCharacter, ScheduleTimer)
+	DOREPLIFETIME(ACivilianCharacter, ScheduleTimerRate)
+	DOREPLIFETIME(ACivilianCharacter, MoveRadius)
+	DOREPLIFETIME(ACivilianCharacter, SearchRadius)
 }
 
 void ACivilianCharacter::BeginPlay()
@@ -48,12 +61,13 @@ void ACivilianCharacter::StartStateTree() const
 	StateTreeComponent->StartLogic();
 }
 
-void ACivilianCharacter::TakeDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType,
-	AController* InstigatedBy, AActor* DamageCauser)
+float ACivilianCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator,
+	AActor* DamageCauser)
 {
 	bIsAlive = false;
 	const FGameplayTag Tag = Tag.RequestGameplayTag("Dead");
 	StateTreeComponent->SendStateTreeEvent(FStateTreeEvent(Tag));
+	return Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 }
 
 void ACivilianCharacter::ProcessStimuli(AActor* Actor, FAIStimulus Stimulus)
@@ -64,25 +78,12 @@ void ACivilianCharacter::ProcessStimuli(AActor* Actor, FAIStimulus Stimulus)
 		// Frighten on seeing corpse
 		if(Actor->IsA<AEnemyCharacter>() || Actor->IsA<ACivilianCharacter>())
 		{
-			if(Actor->IsA<AEnemyCharacter>())
+			const ABaseCharacter* Character = Cast<ABaseCharacter>(Actor);
+			if(!Character->bIsAlive)
 			{
-				AEnemyCharacter* Enemy = Cast<AEnemyCharacter>(Actor);
-				if(Enemy->IsDead())
-				{
-					bIsFrightened = true;
-					FGameplayTag Tag = Tag.RequestGameplayTag("Flee");
-					StateTreeComponent->SendStateTreeEvent(FStateTreeEvent(Tag));
-				}
-			}
-			else
-			{
-				ACivilianCharacter* Civilian = Cast<ACivilianCharacter>(Actor);
-				if(Civilian->IsDead())
-				{
-					bIsFrightened = true;
-					FGameplayTag Tag = Tag.RequestGameplayTag("Flee");
-					StateTreeComponent->SendStateTreeEvent(FStateTreeEvent(Tag));
-				}
+				bIsFrightened = true;
+				const FGameplayTag Tag = Tag.RequestGameplayTag("Flee");
+				StateTreeComponent->SendStateTreeEvent(FStateTreeEvent(Tag));
 			}
 		}
 	}
@@ -91,7 +92,7 @@ void ACivilianCharacter::ProcessStimuli(AActor* Actor, FAIStimulus Stimulus)
 	{
 		// Frighten on hearing gunfire
 		bIsFrightened = true;
-		FGameplayTag Tag = Tag.RequestGameplayTag("Flee");
+		const FGameplayTag Tag = Tag.RequestGameplayTag("Flee");
 		StateTreeComponent->SendStateTreeEvent(FStateTreeEvent(Tag));
 	}
 }

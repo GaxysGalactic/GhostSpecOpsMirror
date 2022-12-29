@@ -19,16 +19,23 @@ public:
 
 	AEnemyCharacter();
 
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 private:
 
 	virtual void BeginPlay() override;
+
+	virtual void Tick(float DeltaSeconds) override;
 
 	/** Starts the State Tree Logic */
 	void StartStateTree() const;
 
 	/** Taking damage */
-	UFUNCTION()
-	void TakeDamage(AActor* DamagedActor, float Damage, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser);
+	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
+	
+	void UpdateFocus();
+	
+	void UpdateAggroList(AActor* Actor, FAIStimulus Stimulus);
 
 	/** Process visual stimuli */
 	void ProcessVision(AActor* Actor, FAIStimulus Stimulus);
@@ -41,7 +48,7 @@ private:
 	void Alert() const;
 
 	/** Send Chase event to State Tree */
-	void Chase() const;
+	void Chase();
 
 	/** Turns off widget visibility */
 	void HideWidget() const;
@@ -49,48 +56,48 @@ private:
 protected:
 	
 	/** Path for the enemy to follow (or guard location) */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AILogic, Replicated)
 	class APatrolPath* PatrolPath;
 
 	/** Current index in patrol path */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AILogic, Replicated)
 	int32 PatrolIndex;
 
 	/** Enemy sees player or remembers seeing them */
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = AILogic, Replicated)
 	bool bCanSeePlayer;
 
 	/** Used for flee state */
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = AILogic, Replicated)
 	bool bShouldRetreat;
 
 	/** Used when seeing a corpse */
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = AILogic, Replicated)
 	bool bIsPermanentlyAlert;
 
 	/** For investigation */
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = AILogic, Replicated)
 	FVector TargetLocation;
 
 	/** For chasing / attacking */
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = AILogic, Replicated)
 	TArray<AActor*> AggroList;
 
 	/** Current health */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AILogic, Replicated)
 	float Health;
 
 	/** Direction of patrol. Only really useful when patrol doesn't cycle.
 	True - Forwards, False - Backwards */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AILogic, Replicated)
 	bool PatrolDirection;
 
 	/** Death animation montage */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Animation)
 	class UAnimMontage* DeathMontage;
 
 	/** Alert Bark */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Sound)
 	class USoundCue* AlertSound;
 
 	/** State Tree Logic */
@@ -106,13 +113,15 @@ protected:
 	class UAIPerceptionStimuliSourceComponent* StimuliSourceComponent;
 
 	/** Widget Component for Exclamation Mark */
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	class UWidgetComponent* WidgetComponent;
 
 public:
 
+	/** Is the enemy dead? */
 	bool IsDead() const { return !bIsAlive; }
 
+	/** Can the enemy see a player? */
 	bool CanSeePlayer() const { return bCanSeePlayer; }
 
 	/** Returns the patrol path */
@@ -123,5 +132,8 @@ public:
 
 	/** Updates patrol index to the next point in sequence */
 	void UpdatePatrolIndex();
+
+	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, WithValidation, Category = Animation)
+	void MulticastChaseBark();
 	
 };

@@ -11,6 +11,8 @@
 #include "Ghost_SpecOps/Civilian/CivilianCharacter.h"
 #include "Ghost_SpecOps/Player/PlayerCharacter.h"
 #include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetMathLibrary.h"
+#include "Net/UnrealNetwork.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "Perception/AISense_Hearing.h"
@@ -35,8 +37,22 @@ AEnemyCharacter::AEnemyCharacter() :
 	WidgetComponent->SetVisibility(false);
 
 	// Delegate Binding
-	OnTakeAnyDamage.AddDynamic(this, &AEnemyCharacter::TakeDamage);
 	PerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this, &AEnemyCharacter::ProcessStimuli);
+}
+
+void AEnemyCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AEnemyCharacter, PatrolPath)
+	DOREPLIFETIME(AEnemyCharacter, PatrolIndex)
+	DOREPLIFETIME(AEnemyCharacter, bCanSeePlayer)
+	DOREPLIFETIME(AEnemyCharacter, bShouldRetreat)
+	DOREPLIFETIME(AEnemyCharacter, bIsPermanentlyAlert)
+	DOREPLIFETIME(AEnemyCharacter, TargetLocation)
+	DOREPLIFETIME(AEnemyCharacter, AggroList)
+	DOREPLIFETIME(AEnemyCharacter, Health)
+	DOREPLIFETIME(AEnemyCharacter, PatrolDirection)
 }
 
 void AEnemyCharacter::BeginPlay()
@@ -49,20 +65,38 @@ void AEnemyCharacter::BeginPlay()
 	Super::BeginPlay();
 }
 
+void AEnemyCharacter::Tick(float DeltaSeconds)
+{
+	const APlayerCharacter* Player =  Cast<APlayerCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
+	const FVector PlayerLocation = Player->GetFollowCamera()->GetComponentLocation();
+	const FRotator Rotator = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), PlayerLocation);
+	
+	WidgetComponent->SetWorldRotation(Rotator);
+	
+	Super::Tick(DeltaSeconds);
+}
+
 void AEnemyCharacter::StartStateTree() const
 {
 	StateTreeComponent->StartLogic();
 }
 
-void AEnemyCharacter::TakeDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType,
-                                 AController* InstigatedBy, AActor* DamageCauser)
+float AEnemyCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator,
+	AActor* DamageCauser)
 {
-	Health -= Damage;
+	Health -= DamageAmount;
+
+	// Rotate to face
+	if(AggroList.IsEmpty())
+	{
+		//TODO: Rotate to face after ApplyPointDamage
+	}
+	
 	// Death
 	if (Health <= 0)
 	{
 		bIsAlive = false;
-		FGameplayTag DeathTag = DeathTag.RequestGameplayTag("Dead");
+		const FGameplayTag DeathTag = DeathTag.RequestGameplayTag("Dead");
 		const FStateTreeEvent DeathEvent(DeathTag);
 		StateTreeComponent->SendStateTreeEvent(DeathEvent);
 	}
@@ -70,88 +104,89 @@ void AEnemyCharacter::TakeDamage(AActor* DamagedActor, float Damage, const UDama
 	else if(Health <= 20)
 	{
 		bShouldRetreat = true;
-		FGameplayTag RetreatTag = RetreatTag.RequestGameplayTag("Retreat");
+		const FGameplayTag RetreatTag = RetreatTag.RequestGameplayTag("Retreat");
 		const FStateTreeEvent RetreatEvent(RetreatTag);
 		StateTreeComponent->SendStateTreeEvent(RetreatEvent);
 	}
 	
+	return Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+}
+
+void AEnemyCharacter::UpdateFocus()
+{
+	AAIController* AIController = Cast<AAIController>(GetController());
+	if(!AggroList.IsEmpty())
+	{
+		if(AIController)
+		{
+			AIController->SetFocus(AggroList[0]);
+		}
+	}
+	else
+	{
+		if(AIController)
+		{
+			AIController->ClearFocus(EAIFocusPriority::Gameplay);
+		}
+	}
+}
+
+void AEnemyCharacter::UpdateAggroList(AActor* Actor, FAIStimulus Stimulus)
+{
+	// Player enters vision
+	if(Stimulus.IsActive())
+	{
+		const bool bFirstAggro = AggroList.IsEmpty();
+		AggroList.Add(Actor);
+		if(bFirstAggro)
+		{
+			bIsAiming = true;
+			Chase();
+		}
+	}
+	// Player exits vision
+	else if(!Stimulus.IsActive())
+	{
+		AggroList.Remove(Actor);
+
+		// If vision lost on all players, investigate around area
+		if(AggroList.IsEmpty())
+		{
+			bIsAiming = false;
+			TargetLocation = Stimulus.StimulusLocation;
+			Alert();
+		}
+	}
 }
 
 void AEnemyCharacter::ProcessVision(AActor* Actor, FAIStimulus Stimulus)
 {
-	// Permanently Alert on seeing corpse
+	// Enemy / Civilian sourced stimuli
 	if(Stimulus.IsActive() && !bIsPermanentlyAlert && (Actor->IsA<AEnemyCharacter>() || Actor->IsA<ACivilianCharacter>()))
 	{
-		if(Actor->IsA<AEnemyCharacter>())
+		// Permanently alert on seeing corpse
+		const ABaseCharacter* Character = Cast<ABaseCharacter>(Actor);
+		if(!Character->bIsAlive)
 		{
-			AEnemyCharacter* Enemy = Cast<AEnemyCharacter>(Actor);
-			if(Enemy->IsDead())
+			bIsPermanentlyAlert = true;
+			TargetLocation = Stimulus.StimulusLocation;
+			if(!CanSeePlayer())
 			{
-				bIsPermanentlyAlert = true;
-				TargetLocation = Stimulus.StimulusLocation;
-				Alert();
-			}
-		}
-		else
-		{
-			ACivilianCharacter* Civilian = Cast<ACivilianCharacter>(Actor);
-			if(Civilian->IsDead())
-			{
-				bIsPermanentlyAlert = true;
-				TargetLocation = Stimulus.StimulusLocation;
-				Alert();
+				Alert();	
 			}
 		}
 	}
 	// Player-sourced stimuli
 	else if(Actor->IsA<APlayerCharacter>())
 	{
-		// Player enters vision
-		if(Stimulus.IsActive())
-		{
-			const bool bFirstAggro = AggroList.IsEmpty();
-			AggroList.Add(Actor);
-			if(bFirstAggro)
-			{
-				Chase();
-			}
-		}
-		// Player exits vision
-		else if(!Stimulus.IsActive())
-		{
-			AggroList.Remove(Actor);
+		// Aggro
+		UpdateAggroList(Actor, Stimulus);
 
-			// If vision lost on all players, investigate around area
-			if(AggroList.IsEmpty())
-			{
-				TargetLocation = Stimulus.StimulusLocation;
-				Alert();
-			}
-		}
-
-		if(!AggroList.IsEmpty())
-		{
-			AAIController* AIController = Cast<AAIController>(GetController());
-			if(AIController)
-			{
-				AIController->SetFocus(AggroList[0]);
-			}
-		}
-		else
-		{
-			AAIController* AIController = Cast<AAIController>(GetController());
-			if(AIController)
-			{
-				AIController->ClearFocus(EAIFocusPriority::Gameplay);
-			}
-		}
+		// Focus
+		UpdateFocus();
 		
 		// Update CanSeePlayer variable
 		bCanSeePlayer = !AggroList.IsEmpty();
-		if(bCanSeePlayer)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("CanSeePlayer"));
-		}
 	}
 }
 
@@ -180,13 +215,13 @@ void AEnemyCharacter::Alert() const
 	StateTreeComponent->SendStateTreeEvent(FStateTreeEvent(Tag));
 }
 
-void AEnemyCharacter::Chase() const
+void AEnemyCharacter::Chase()
 {
-	UGameplayStatics::PlaySoundAtLocation(this, AlertSound, GetActorLocation(), GetActorRotation());
-	WidgetComponent->SetVisibility(true);
-
-	FTimerHandle TurnOffWidgetHandle;
-	GetWorldTimerManager().SetTimer(TurnOffWidgetHandle, this, &AEnemyCharacter::HideWidget, 2.f, false);
+	// Bark for Chase
+	if(HasAuthority())
+	{
+		MulticastChaseBark();	
+	}
 	
 	const FGameplayTag Tag = Tag.RequestGameplayTag("Chase");
 	StateTreeComponent->SendStateTreeEvent(FStateTreeEvent(Tag));	
@@ -249,4 +284,20 @@ void AEnemyCharacter::UpdatePatrolIndex()
 		}
 		
 	}
+}
+
+void AEnemyCharacter::MulticastChaseBark_Implementation()
+{
+	UGameplayStatics::PlaySoundAtLocation(this, AlertSound, GetActorLocation(), GetActorRotation());
+	WidgetComponent->SetVisibility(true);
+
+	FTimerHandle TurnOffWidgetHandle;
+	GetWorldTimerManager().SetTimer(TurnOffWidgetHandle, this, &AEnemyCharacter::HideWidget, 2.f, false);
+
+	UE_LOG(LogTemp, Warning, TEXT("bark!"));
+}
+
+bool AEnemyCharacter::MulticastChaseBark_Validate()
+{
+	return true;
 }

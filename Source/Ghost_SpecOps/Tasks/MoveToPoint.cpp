@@ -4,7 +4,6 @@
 #include "MoveToPoint.h"
 
 #include "AIController.h"
-#include "Ghost_SpecOps/Enemy/EnemyCharacter.h"
 
 EStateTreeRunStatus UMoveToPoint::EnterState(FStateTreeExecutionContext& Context,
                                              const FStateTreeTransitionResult& Transition)
@@ -19,7 +18,6 @@ EStateTreeRunStatus UMoveToPoint::EnterState(FStateTreeExecutionContext& Context
 
 void UMoveToPoint::FinishMovement(FAIRequestID RequestID, EPathFollowingResult::Type Result)
 {
-	//THE ERROR WAS HERE. IT WAS REQUESTING MOVEMENT AGAIN. MAKE ANOTHER VARIABLE OR STOP IT FROM ENTERING LINE 30
 	bIsMoving = false;
 }
 
@@ -32,21 +30,6 @@ EStateTreeRunStatus UMoveToPoint::Tick(FStateTreeExecutionContext& Context, cons
 			return RequestMovement();
 		}
 	}
-	/*
-	if(!bIsMoving)
-	{
-		if(Actor->IsA<AEnemyCharacter>())
-		{
-			AEnemyCharacter* Enemy = Cast<AEnemyCharacter>(Actor);
-			if(Enemy->CanSeePlayer())
-			{
-				UE_LOG(LogTemp, Warning, TEXT("State should go to Wait"));
-			}
-			
-			UE_LOG(LogTemp, Warning, TEXT("State should succeed"));
-		}
-	}
-	*/
 	return bIsMoving ? EStateTreeRunStatus::Running : EStateTreeRunStatus::Succeeded;
 }
 

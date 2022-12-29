@@ -20,6 +20,8 @@ public:
 
 	ACivilianCharacter();
 
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 private:
 
 	virtual void BeginPlay() override;
@@ -31,8 +33,7 @@ private:
 	void StartStateTree() const;
 
 	/** Taking damage */
-	UFUNCTION()
-	void TakeDamage(AActor* DamagedActor, float Damage, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser);
+	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
 	/** Process incoming Perception Stimuli */
 	UFUNCTION()
@@ -41,32 +42,31 @@ private:
 protected:
 
 	/** Used for the "Cower" state / animation */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = AILogic, Replicated)
 	bool bIsFrightened;
 
 	/** Indicates if being alive is essential to mission success. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AILogic, Replicated)
 	bool bIsEssential;
-	
 
 	/** Indicates if the civilian should try to use a computer at their earliest possible convenience */
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = AILogic, Replicated)
 	bool bUseComputer;
 	
 	/** Timer for switching between computer / roam desires */
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = AILogic, Replicated)
 	FTimerHandle ScheduleTimer;
 
 	/** Schedule timer change rate. This will pause when interacting with SO. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AILogic, Replicated)
 	float ScheduleTimerRate;
 
 	/** Radius for their randomized movement in roam state*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AILogic, Replicated)
 	float MoveRadius;
 
 	/** Radius to outline search box for finding smart objects */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AILogic, Replicated)
 	FVector SearchRadius;
 
 	/** Death animation montage */
@@ -91,6 +91,7 @@ protected:
 
 public:
 
+	/** Is the civilian dead? */
 	bool IsDead() const { return !bIsAlive; }
 	
 };

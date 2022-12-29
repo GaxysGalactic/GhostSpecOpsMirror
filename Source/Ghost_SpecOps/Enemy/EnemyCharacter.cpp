@@ -7,17 +7,19 @@
 #include "../Tasks/PatrolPath.h"
 #include "Components/SplineComponent.h"
 #include "Components/StateTreeComponent.h"
+#include "Components/WidgetComponent.h"
 #include "Ghost_SpecOps/Civilian/CivilianCharacter.h"
 #include "Ghost_SpecOps/Player/PlayerCharacter.h"
+#include "Kismet/GameplayStatics.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "Perception/AISense_Hearing.h"
 #include "Perception/AISense_Sight.h"
+#include "Sound/SoundCue.h"
 
 AEnemyCharacter::AEnemyCharacter() :
 	PatrolIndex(0),
 	bCanSeePlayer(false),
-	bIsDead(false),
 	bShouldRetreat(false),
 	bIsPermanentlyAlert(false),
 	Health(100.f),
@@ -27,6 +29,10 @@ AEnemyCharacter::AEnemyCharacter() :
 	StateTreeComponent = CreateDefaultSubobject<UStateTreeComponent>(TEXT("State Tree"));
 	PerceptionComponent = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("Perception"));
 	StimuliSourceComponent = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("Stimulus"));
+
+	WidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("Widget"));
+	WidgetComponent->SetupAttachment(RootComponent);
+	WidgetComponent->SetVisibility(false);
 
 	// Delegate Binding
 	OnTakeAnyDamage.AddDynamic(this, &AEnemyCharacter::TakeDamage);
@@ -55,7 +61,7 @@ void AEnemyCharacter::TakeDamage(AActor* DamagedActor, float Damage, const UDama
 	// Death
 	if (Health <= 0)
 	{
-		bIsDead = true;
+		bIsAlive = false;
 		FGameplayTag DeathTag = DeathTag.RequestGameplayTag("Dead");
 		const FStateTreeEvent DeathEvent(DeathTag);
 		StateTreeComponent->SendStateTreeEvent(DeathEvent);
@@ -176,8 +182,19 @@ void AEnemyCharacter::Alert() const
 
 void AEnemyCharacter::Chase() const
 {
+	UGameplayStatics::PlaySoundAtLocation(this, AlertSound, GetActorLocation(), GetActorRotation());
+	WidgetComponent->SetVisibility(true);
+
+	FTimerHandle TurnOffWidgetHandle;
+	GetWorldTimerManager().SetTimer(TurnOffWidgetHandle, this, &AEnemyCharacter::HideWidget, 2.f, false);
+	
 	const FGameplayTag Tag = Tag.RequestGameplayTag("Chase");
 	StateTreeComponent->SendStateTreeEvent(FStateTreeEvent(Tag));	
+}
+
+void AEnemyCharacter::HideWidget() const
+{
+	WidgetComponent->SetVisibility(false);
 }
 
 void AEnemyCharacter::UpdatePatrolIndex()

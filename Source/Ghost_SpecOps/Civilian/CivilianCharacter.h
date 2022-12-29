@@ -47,10 +47,7 @@ protected:
 	/** Indicates if being alive is essential to mission success. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bIsEssential;
-
-	/** Used for death state */
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-	bool bIsDead;
+	
 
 	/** Indicates if the civilian should try to use a computer at their earliest possible convenience */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
@@ -94,6 +91,6 @@ protected:
 
 public:
 
-	bool IsDead() const { return bIsDead; }
+	bool IsDead() const { return !bIsAlive; }
 	
 };

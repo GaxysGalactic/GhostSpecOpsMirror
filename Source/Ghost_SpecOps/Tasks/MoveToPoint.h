@@ -51,5 +51,8 @@ protected:
 
 	/** Is the pawn performing a move action? */
 	bool bIsMoving = false;
+
+	/** Has the pawn requested a movement yet? */
+	bool bMovementRequested = false;
 	
 };

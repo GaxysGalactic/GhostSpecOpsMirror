@@ -12,7 +12,6 @@
 ACivilianCharacter::ACivilianCharacter() :
 	bIsFrightened(false),
 	bIsEssential(false),
-	bIsDead(false),
 	bUseComputer(true),
 	ScheduleTimerRate(15.f),
 	MoveRadius(1000.f),
@@ -52,7 +51,7 @@ void ACivilianCharacter::StartStateTree() const
 void ACivilianCharacter::TakeDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType,
 	AController* InstigatedBy, AActor* DamageCauser)
 {
-	bIsDead = true;
+	bIsAlive = false;
 	const FGameplayTag Tag = Tag.RequestGameplayTag("Dead");
 	StateTreeComponent->SendStateTreeEvent(FStateTreeEvent(Tag));
 }

@@ -27,11 +27,10 @@ EStateTreeRunStatus UMoveToPoint::Tick(FStateTreeExecutionContext& Context, cons
 {
 	if(!bTriggerOnEnterState)
 	{
-		if(bIsPreviousTaskFinished && !bIsMoving)
+		if(bIsPreviousTaskFinished && !bIsMoving && !bMovementRequested)
 		{
 			return RequestMovement();
 		}
-		return EStateTreeRunStatus::Running;
 	}
 	/*
 	if(!bIsMoving)
@@ -77,6 +76,7 @@ EStateTreeRunStatus UMoveToPoint::RequestMovement()
 		{
 			const FPathFollowingRequestResult RequestResult = Controller->MoveTo(TargetLocation);
 			bIsMoving = true;
+			bMovementRequested = true;
 
 			Controller->ReceiveMoveCompleted.AddUniqueDynamic(this, &UMoveToPoint::FinishMovement);
 

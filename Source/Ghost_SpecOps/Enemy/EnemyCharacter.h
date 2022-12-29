@@ -43,6 +43,9 @@ private:
 	/** Send Chase event to State Tree */
 	void Chase() const;
 
+	/** Turns off widget visibility */
+	void HideWidget() const;
+
 protected:
 	
 	/** Path for the enemy to follow (or guard location) */
@@ -56,10 +59,6 @@ protected:
 	/** Enemy sees player or remembers seeing them */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	bool bCanSeePlayer;
-
-	/** Used for death state */
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-	bool bIsDead;
 
 	/** Used for flee state */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
@@ -90,6 +89,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation)
 	class UAnimMontage* DeathMontage;
 
+	/** Alert Bark */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class USoundCue* AlertSound;
+
 	/** State Tree Logic */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	class UStateTreeComponent* StateTreeComponent;
@@ -102,9 +105,13 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	class UAIPerceptionStimuliSourceComponent* StimuliSourceComponent;
 
+	/** Widget Component for Exclamation Mark */
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	class UWidgetComponent* WidgetComponent;
+
 public:
 
-	bool IsDead() const { return bIsDead; }
+	bool IsDead() const { return !bIsAlive; }
 
 	bool CanSeePlayer() const { return bCanSeePlayer; }
 

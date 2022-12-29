@@ -35,10 +35,11 @@ void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	PlayerController = Cast<AGhostPlayerController>(Controller);
-	if(PlayerController)
+	UpdateHUDHealth();
+
+	if(HasAuthority())
 	{
-		PlayerController->SetHUDHealt(Health, MaxHealth);
+		OnTakeAnyDamage.AddDynamic(this, &APlayerCharacter::ReceiveDamage);
 	}
 	
 	AIPerception->RegisterForSense(TSubclassOf<UAISense_Sight>());
@@ -76,9 +77,13 @@ void APlayerCharacter::Tick(float DeltaSeconds)
 	Super::Tick(DeltaSeconds);
 	CalculateAimOffset(DeltaSeconds);
 
+	// if (GEngine)
+	// {
+	// 	//Print debug message
+	// 	GEngine->AddOnScreenDebugMessage(1, 1.f, FColor::Yellow, FString::Printf(TEXT("Mesh: %f"), GetMesh()->GetRelativeLocation().Z));
+	// }
+
 }
-
-
 
 void APlayerCharacter::PostInitializeComponents()
 {
@@ -88,6 +93,31 @@ void APlayerCharacter::PostInitializeComponents()
 		CombatComponent->PlayerCharacter = this;
 	}
 	
+}
+
+void APlayerCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType*, AController* InstigatorController, AActor* DamageCauser)
+{
+	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
+	UpdateHUDHealth();
+	//PLayeHitReactMontage();
+}
+
+void APlayerCharacter::OnRep_Health()
+{
+	Super::OnRep_Health();// no hace nada :v
+
+	UpdateHUDHealth();
+
+	//PlayeHitReactMontage();
+}
+
+void APlayerCharacter::UpdateHUDHealth()
+{
+	PlayerController = PlayerController == nullptr ? Cast<AGhostPlayerController>(Controller) : PlayerController;
+	if(PlayerController)
+	{
+		PlayerController->SetHUDHealth(Health, MaxHealth);
+	}
 }
 
 //------------------------------------------- Movement ------------------------------------------------------------
@@ -260,16 +290,11 @@ void APlayerCharacter::Prone()
 	FTimerHandle Handle;
 	GetWorld()->GetTimerManager().SetTimer(Handle, TimerCallback, 1.3f, false);
 
-	float MeshStartZ = -88.f;
-	const float MeshEndZ = -37.f;
-	
-	
+	// float MeshStartZ = -88.f;
+	// const float MeshEndZ = -37.f;
 	// float MeshInterpLocationZ = FMath::FInterpTo(CurrentMeshZ, MeshEndZ, )
 	
-	
-	
-	// GetMesh()->SetRelativeLocation(FVector(0.f, 0.f, MeshEndZ));
-
+	GetMesh()->SetRelativeLocation(FVector(0.f, 0.f, -37.f));
 	GetCapsuleComponent()->SetCapsuleSize(30.f, 30.f);
 
 	float CurrentMeshZ = GetMesh()->GetRelativeLocation().Z;
@@ -293,7 +318,7 @@ void APlayerCharacter::StandUp()
 	FTimerHandle Handle;
 	GetWorld()->GetTimerManager().SetTimer(Handle, TimerCallback, 1.3f, false);
 
-	// GetMesh()->SetRelativeLocation(FVector(0.f, 0.f, -88.f));
+	GetMesh()->SetRelativeLocation(FVector(0.f, 0.f, -88.f));
 	GetCapsuleComponent()->SetCapsuleSize(34.f, 88.f);
 
 	float CurrentMeshZ = GetMesh()->GetRelativeLocation().Z;

@@ -48,6 +48,14 @@ protected:
 
 	FRotator StartingAimRotation;
 
+	UFUNCTION()
+	void ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, class AController* InstigatorController, AActor* DamageCauser);
+
+	virtual void OnRep_Health() override;
+
+	UFUNCTION()
+	void UpdateHUDHealth();
+
 	//------------------------------------------- Movement ------------------------------------------------------------
 	
 	void MoveForward(float InAxisValue);

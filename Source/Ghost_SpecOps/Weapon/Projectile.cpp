@@ -49,6 +49,7 @@ void AProjectile::BeginPlay()
 
 void AProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* HitActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& InHit)
 {
+	
 	if(HitActor && GetOwner())
 	{
 		UGameplayStatics::ApplyPointDamage(HitActor, 10.f, NormalImpulse, InHit, GetOwner()->GetInstigatorController(), this, TSubclassOf<UDamageType>());

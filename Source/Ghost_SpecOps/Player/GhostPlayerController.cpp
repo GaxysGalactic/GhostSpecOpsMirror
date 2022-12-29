@@ -10,7 +10,7 @@ void AGhostPlayerController::BeginPlay()
 	PlayerHUD = Cast<APlayerHUD>(GetHUD());
 }
 
-void AGhostPlayerController::SetHUDHealt(float InHealth, float MaxHealth)
+void AGhostPlayerController::SetHUDHealth(float InHealth, float MaxHealth)
 {
 	PlayerHUD = PlayerHUD == nullptr ? Cast<APlayerHUD>(GetHUD()) : PlayerHUD;
 

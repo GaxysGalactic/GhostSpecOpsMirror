@@ -63,7 +63,7 @@ protected:
 	float Health = 100.f;
 
 	UFUNCTION()
-	void OnRep_Health();
+	virtual void OnRep_Health();
 	
 	float Speed;
 	

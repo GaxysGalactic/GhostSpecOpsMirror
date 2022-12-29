@@ -1,2 +1,31 @@
 #include "GhostPlayerController.h"
 
+#include "Components/ProgressBar.h"
+#include "Ghost_SpecOps/HUD/CharacterOverlay.h"
+
+void AGhostPlayerController::BeginPlay()
+{
+	Super::BeginPlay();
+
+	PlayerHUD = Cast<APlayerHUD>(GetHUD());
+}
+
+void AGhostPlayerController::SetHUDHealt(float InHealth, float MaxHealth)
+{
+	PlayerHUD = PlayerHUD == nullptr ? Cast<APlayerHUD>(GetHUD()) : PlayerHUD;
+
+	bool bIsHUDValid = PlayerHUD &&
+		PlayerHUD->CharacterOverlay &&
+		PlayerHUD->CharacterOverlay->HealthBar &&
+		PlayerHUD->CharacterOverlay->HealthText;
+	
+	if(bIsHUDValid)
+	{
+		const float HealthPercent = InHealth / MaxHealth;
+		PlayerHUD->CharacterOverlay->HealthBar->SetPercent(HealthPercent);
+		FString HealthText = FString::Printf(TEXT("%d/%d"), FMath::CeilToInt(InHealth), FMath::CeilToInt(MaxHealth));
+		PlayerHUD->CharacterOverlay->HealthText->SetText(FText::FromString(HealthText));
+	}
+}
+
+

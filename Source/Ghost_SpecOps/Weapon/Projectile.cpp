@@ -17,6 +17,8 @@ AProjectile::AProjectile()
 	CollisionBox->SetCollisionResponseToAllChannels(ECR_Ignore);
 	CollisionBox->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 	CollisionBox->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
+	CollisionBox->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
+
 
 	ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMuvementComponent"));
 	ProjectileMovementComponent->bRotationFollowsVelocity = true;
@@ -49,7 +51,7 @@ void AProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* HitActor, UPr
 {
 	if(HitActor && GetOwner())
 	{
-		UGameplayStatics::ApplyDamage(HitActor, 10.f, GetOwner()->GetInstigatorController(), this, TSubclassOf<UDamageType>());
+		UGameplayStatics::ApplyPointDamage(HitActor, 10.f, NormalImpulse, InHit, GetOwner()->GetInstigatorController(), this, TSubclassOf<UDamageType>());
 	}
 	Destroy();
 }

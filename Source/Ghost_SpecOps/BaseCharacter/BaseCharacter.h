@@ -35,7 +35,6 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = DEFAULTS, Replicated)
 	bool bIsRunning;
 
-	// UPROPERTY(BlueprintReadWrite, Category = DEFAULTS, Replicated, VisibleAnywhere)
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = DEFAULTS, Replicated)
 	bool bIsAlive;
 
@@ -57,6 +56,15 @@ protected:
 
 	//---------------------------------------------------------------------------------------------------------
 
+	UPROPERTY(EditAnywhere, Category = "Player stats")
+	float MaxHealth = 100.f;
+
+	UPROPERTY(ReplicatedUsing = OnRep_Health, VisibleAnywhere, Category = "Player Stats")
+	float BaseHealth = 100.f;
+
+	UFUNCTION()
+	void OnRep_Health();
+	
 	float Speed;
 	
 	float BaseWalkSpeed;

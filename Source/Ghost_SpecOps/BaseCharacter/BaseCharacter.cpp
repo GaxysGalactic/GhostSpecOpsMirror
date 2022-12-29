@@ -20,14 +20,11 @@ ABaseCharacter::ABaseCharacter()
 
 	bIsAlive = true;
 
-	
-
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
 	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 0.f, 850.f);
 	GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
-
 	
 	bReplicates = true;
 	SetReplicatingMovement(true);
@@ -42,10 +39,11 @@ void ABaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME(ABaseCharacter, bIsAiming)
-	DOREPLIFETIME(ABaseCharacter, bIsRunning)
-	DOREPLIFETIME(ABaseCharacter, bIsProne)
-	DOREPLIFETIME(ABaseCharacter, bIsStanding)
+	DOREPLIFETIME(ABaseCharacter, bIsAiming);
+	DOREPLIFETIME(ABaseCharacter, bIsRunning);
+	DOREPLIFETIME(ABaseCharacter, bIsProne);
+	DOREPLIFETIME(ABaseCharacter, bIsStanding);
+	DOREPLIFETIME(ABaseCharacter, BaseHealth);
 
 }
 
@@ -62,6 +60,11 @@ void ABaseCharacter::BeginPlay()
 			CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, WeaponSocketName);
 		}
 	}
+}
+
+void ABaseCharacter::OnRep_Health()
+{
+	//function called when health is replicated
 }
 
 FVector ABaseCharacter::GetHitTarget() const

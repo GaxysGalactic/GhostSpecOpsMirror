@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GhostPlayerController.h"
 #include "Ghost_SpecOps/BaseCharacter/BaseCharacter.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -37,7 +38,8 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	USpringArmComponent* SpringArmComponent;
 
-	APlayerController* PlayerController;
+	UPROPERTY()
+	AGhostPlayerController* PlayerController;
 
 	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	bool bIsInCover;
@@ -70,8 +72,17 @@ protected:
 
 	void OnProneButtonPressed();
 
-	UFUNCTION(Server, Reliable, WithValidation)
-	void Server_OnProneButtonPressed();
+	bool CanStandUp() const;
+
+	void Prone();
+
+	void StandUp();
+
+	UFUNCTION(Server, Reliable)
+	void Server_Prone();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_Prone(const bool InStandUp);
 
 	//---------------------------------------------- Aim --------------------------------------------------------------
 

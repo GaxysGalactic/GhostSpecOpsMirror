@@ -53,10 +53,14 @@ private:
 
 	// HUD && crosshairs
 	float CrosshairVelocityFactor;
+	float CrosshairAimFactor;
+	float CrosshairShootingFactor;
 
 	FVector HitTarget;
 
 private:
+
+	void Fire();
 
 	/*
 	 * Aiming && FOV
@@ -74,7 +78,15 @@ private:
 
 	void InterpFOV(float DeltaTime);
 
+	/*
+	 *	Automatic fire 
+	 */
 
+	FTimerHandle FireTimer;
 
+	bool bCanFire = true;
+
+	void StartFireTimer();
+	void FinishFireTimer();
 
 };

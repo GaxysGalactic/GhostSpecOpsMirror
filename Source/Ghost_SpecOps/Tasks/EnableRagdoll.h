@@ -19,7 +19,7 @@ class GHOST_SPECOPS_API UEnableRagdoll : public UStateTreeTaskBlueprintBase
 protected:
 
 	/** Actor that the State Tree is attached to.
-		This task requires it to be a character for it to work properly. */
+	This task requires it to be a character for it to work properly. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Context")
 	AActor* Actor;
 	

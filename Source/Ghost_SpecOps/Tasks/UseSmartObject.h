@@ -20,7 +20,7 @@ class GHOST_SPECOPS_API UUseSmartObject : public UStateTreeTaskBlueprintBase
 protected:
 
 	/** Actor that the State Tree is attached to.
-		This task requires it to be a pawn for it to work properly. */
+	This task requires it to be a pawn for it to work properly. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Context")
 	AActor* Actor;
 

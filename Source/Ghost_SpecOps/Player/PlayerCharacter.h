@@ -11,6 +11,8 @@
 class UCameraComponent;
 class USpringArmComponent;
 class UAnimMontage;
+class UAIPerceptionStimuliSourceComponent;
+
 
 UCLASS()
 class GHOST_SPECOPS_API APlayerCharacter : public ABaseCharacter
@@ -26,20 +28,19 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return CameraComponent; }
 
+	UAIPerceptionStimuliSourceComponent* AIPerception;
+
 private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	UCameraComponent* CameraComponent;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	UCameraComponent* CameraComponent_ADS;
-
-	UPROPERTY(EditAnywhere, Category = Camera)
-	AActor* ViewActor;
-	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	USpringArmComponent* SpringArmComponent;
 
 	APlayerController* PlayerController;
+
+	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+	bool bIsInCover;
 
 protected:
 

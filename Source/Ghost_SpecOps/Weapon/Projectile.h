@@ -22,8 +22,8 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
-	// UFUNCTION()
-	// virtual void OnHit(UPrimitiveComponent* HitComponent, AActor* HitActor, UPrimitiveComponent OtherComp, FVector NormalImpolse, const FHitResult& InHit);
+	UFUNCTION()
+	virtual void OnHit(UPrimitiveComponent* HitComponent, AActor* HitActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& InHit);
 
 private:
 

@@ -4,22 +4,18 @@
 #include "PlayAnimMontage.h"
 
 #include "GameFramework/Character.h"
+#include "Ghost_SpecOps/BaseCharacter/BaseCharacter.h"
 
 EStateTreeRunStatus UPlayAnimMontage::EnterState(FStateTreeExecutionContext& Context,
                                                  const FStateTreeTransitionResult& Transition)
 {
-	ACharacter* Character = Cast<ACharacter>(Actor);
+	ABaseCharacter* Character = Cast<ABaseCharacter>(Actor);
 	if(Character)
 	{
-		// Set a timer to end the state once animation has finished
-		float AnimationTime = Character->PlayAnimMontage(AnimMontage);
+		Character->PlayAnimMontage(AnimMontage);
+		Character->MulticastPlayAnimMontage(AnimMontage);
+		Character->GetWorldTimerManager().SetTimer(AnimationTimer, this, &UPlayAnimMontage::EndState, AnimMontage->GetPlayLength());
 
-		if(AnimationTime == 0.f)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("AnimationTime is 0"));
-		}
-
-		Character->GetWorldTimerManager().SetTimer(AnimationTimer, this, &UPlayAnimMontage::EndState, AnimationTime);
 		bIsRunning = true;
 	}
 	return EStateTreeRunStatus::Running;

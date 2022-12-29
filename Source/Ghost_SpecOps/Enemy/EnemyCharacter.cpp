@@ -3,17 +3,233 @@
 
 #include "EnemyCharacter.h"
 
+#include "AIController.h"
 #include "../Tasks/PatrolPath.h"
 #include "Components/SplineComponent.h"
+#include "Components/StateTreeComponent.h"
+#include "Components/WidgetComponent.h"
+#include "Ghost_SpecOps/Civilian/CivilianCharacter.h"
+#include "Ghost_SpecOps/Player/PlayerCharacter.h"
+#include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetMathLibrary.h"
+#include "Net/UnrealNetwork.h"
+#include "Perception/AIPerceptionComponent.h"
+#include "Perception/AIPerceptionStimuliSourceComponent.h"
+#include "Perception/AISense_Hearing.h"
+#include "Perception/AISense_Sight.h"
+#include "Sound/SoundCue.h"
 
 AEnemyCharacter::AEnemyCharacter() :
 	PatrolIndex(0),
-	CanSeePlayer(false),
-	bIsDead(false),
+	bCanSeePlayer(false),
 	bShouldRetreat(false),
+	bIsPermanentlyAlert(false),
 	Health(100.f),
 	PatrolDirection(true)
 {
+	// Components
+	StateTreeComponent = CreateDefaultSubobject<UStateTreeComponent>(TEXT("State Tree"));
+	PerceptionComponent = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("Perception"));
+	StimuliSourceComponent = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("Stimulus"));
+
+	WidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("Widget"));
+	WidgetComponent->SetupAttachment(RootComponent);
+	WidgetComponent->SetVisibility(false);
+
+	// Delegate Binding
+	PerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this, &AEnemyCharacter::ProcessStimuli);
+}
+
+void AEnemyCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AEnemyCharacter, PatrolPath)
+	DOREPLIFETIME(AEnemyCharacter, PatrolIndex)
+	DOREPLIFETIME(AEnemyCharacter, bCanSeePlayer)
+	DOREPLIFETIME(AEnemyCharacter, bShouldRetreat)
+	DOREPLIFETIME(AEnemyCharacter, bIsPermanentlyAlert)
+	DOREPLIFETIME(AEnemyCharacter, TargetLocation)
+	DOREPLIFETIME(AEnemyCharacter, AggroList)
+	DOREPLIFETIME(AEnemyCharacter, Health)
+	DOREPLIFETIME(AEnemyCharacter, PatrolDirection)
+}
+
+void AEnemyCharacter::BeginPlay()
+{
+	if(HasAuthority())
+	{
+		FTimerHandle StartLogicHandle;
+		GetWorldTimerManager().SetTimer(StartLogicHandle, this, &AEnemyCharacter::StartStateTree, 5.f, false);
+	}
+	Super::BeginPlay();
+}
+
+void AEnemyCharacter::Tick(float DeltaSeconds)
+{
+	const APlayerCharacter* Player =  Cast<APlayerCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
+	const FVector PlayerLocation = Player->GetFollowCamera()->GetComponentLocation();
+	const FRotator Rotator = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), PlayerLocation);
+	
+	WidgetComponent->SetWorldRotation(Rotator);
+	
+	Super::Tick(DeltaSeconds);
+}
+
+void AEnemyCharacter::StartStateTree() const
+{
+	StateTreeComponent->StartLogic();
+}
+
+float AEnemyCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator,
+	AActor* DamageCauser)
+{
+	Health -= DamageAmount;
+
+	// Rotate to face
+	if(AggroList.IsEmpty())
+	{
+		//TODO: Rotate to face after ApplyPointDamage
+	}
+	
+	// Death
+	if (Health <= 0)
+	{
+		bIsAlive = false;
+		const FGameplayTag DeathTag = DeathTag.RequestGameplayTag("Dead");
+		const FStateTreeEvent DeathEvent(DeathTag);
+		StateTreeComponent->SendStateTreeEvent(DeathEvent);
+	}
+	// Retreat
+	else if(Health <= 20)
+	{
+		bShouldRetreat = true;
+		const FGameplayTag RetreatTag = RetreatTag.RequestGameplayTag("Retreat");
+		const FStateTreeEvent RetreatEvent(RetreatTag);
+		StateTreeComponent->SendStateTreeEvent(RetreatEvent);
+	}
+	
+	return Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+}
+
+void AEnemyCharacter::UpdateFocus()
+{
+	AAIController* AIController = Cast<AAIController>(GetController());
+	if(!AggroList.IsEmpty())
+	{
+		if(AIController)
+		{
+			AIController->SetFocus(AggroList[0]);
+		}
+	}
+	else
+	{
+		if(AIController)
+		{
+			AIController->ClearFocus(EAIFocusPriority::Gameplay);
+		}
+	}
+}
+
+void AEnemyCharacter::UpdateAggroList(AActor* Actor, FAIStimulus Stimulus)
+{
+	// Player enters vision
+	if(Stimulus.IsActive())
+	{
+		const bool bFirstAggro = AggroList.IsEmpty();
+		AggroList.Add(Actor);
+		if(bFirstAggro)
+		{
+			bIsAiming = true;
+			Chase();
+		}
+	}
+	// Player exits vision
+	else if(!Stimulus.IsActive())
+	{
+		AggroList.Remove(Actor);
+
+		// If vision lost on all players, investigate around area
+		if(AggroList.IsEmpty())
+		{
+			bIsAiming = false;
+			TargetLocation = Stimulus.StimulusLocation;
+			Alert();
+		}
+	}
+}
+
+void AEnemyCharacter::ProcessVision(AActor* Actor, FAIStimulus Stimulus)
+{
+	// Enemy / Civilian sourced stimuli
+	if(Stimulus.IsActive() && !bIsPermanentlyAlert && (Actor->IsA<AEnemyCharacter>() || Actor->IsA<ACivilianCharacter>()))
+	{
+		// Permanently alert on seeing corpse
+		const ABaseCharacter* Character = Cast<ABaseCharacter>(Actor);
+		if(!Character->bIsAlive)
+		{
+			bIsPermanentlyAlert = true;
+			TargetLocation = Stimulus.StimulusLocation;
+			if(!CanSeePlayer())
+			{
+				Alert();	
+			}
+		}
+	}
+	// Player-sourced stimuli
+	else if(Actor->IsA<APlayerCharacter>())
+	{
+		// Aggro
+		UpdateAggroList(Actor, Stimulus);
+
+		// Focus
+		UpdateFocus();
+		
+		// Update CanSeePlayer variable
+		bCanSeePlayer = !AggroList.IsEmpty();
+	}
+}
+
+void AEnemyCharacter::ProcessStimuli(AActor* Actor, FAIStimulus Stimulus)
+{
+	// Handle Vision
+	if(Stimulus.Type == UAISense::GetSenseID<UAISense_Sight>())
+	{
+		ProcessVision(Actor, Stimulus);
+	}
+	// Handle Hearing
+	else if (Stimulus.Type == UAISense::GetSenseID<UAISense_Hearing>())
+	{
+		// Investigate
+		if(Stimulus.IsActive() && !bCanSeePlayer)
+		{
+			TargetLocation = Stimulus.StimulusLocation;
+			Alert();
+		}
+	}
+}
+
+void AEnemyCharacter::Alert() const
+{
+	const FGameplayTag Tag = Tag.RequestGameplayTag("Alert");
+	StateTreeComponent->SendStateTreeEvent(FStateTreeEvent(Tag));
+}
+
+void AEnemyCharacter::Chase()
+{
+	// Bark for Chase
+	if(HasAuthority())
+	{
+		MulticastChaseBark();	
+	}
+	
+	const FGameplayTag Tag = Tag.RequestGameplayTag("Chase");
+	StateTreeComponent->SendStateTreeEvent(FStateTreeEvent(Tag));	
+}
+
+void AEnemyCharacter::HideWidget() const
+{
+	WidgetComponent->SetVisibility(false);
 }
 
 void AEnemyCharacter::UpdatePatrolIndex()
@@ -68,4 +284,20 @@ void AEnemyCharacter::UpdatePatrolIndex()
 		}
 		
 	}
+}
+
+void AEnemyCharacter::MulticastChaseBark_Implementation()
+{
+	UGameplayStatics::PlaySoundAtLocation(this, AlertSound, GetActorLocation(), GetActorRotation());
+	WidgetComponent->SetVisibility(true);
+
+	FTimerHandle TurnOffWidgetHandle;
+	GetWorldTimerManager().SetTimer(TurnOffWidgetHandle, this, &AEnemyCharacter::HideWidget, 2.f, false);
+
+	UE_LOG(LogTemp, Warning, TEXT("bark!"));
+}
+
+bool AEnemyCharacter::MulticastChaseBark_Validate()
+{
+	return true;
 }

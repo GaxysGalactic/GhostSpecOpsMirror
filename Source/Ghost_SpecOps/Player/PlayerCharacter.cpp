@@ -1,5 +1,6 @@
 #include "PlayerCharacter.h"
 
+#include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Ghost_SpecOps/Components/PlayerCombatComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -34,7 +35,11 @@ void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	PlayerController = UGameplayStatics::GetPlayerController(this, 0);
+	PlayerController = Cast<AGhostPlayerController>(Controller);
+	if(PlayerController)
+	{
+		PlayerController->SetHUDHealt(BaseHealth, MaxHealth);
+	}
 	
 	AIPerception->RegisterForSense(TSubclassOf<UAISense_Sight>());
 }
@@ -70,6 +75,7 @@ void APlayerCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 	CalculateAimOffset(DeltaSeconds);
+
 }
 
 
@@ -200,7 +206,6 @@ void APlayerCharacter::CalculateAimOffset(float DeltaTime)
 
 	AO_Pitch = GetBaseAimRotation().Pitch;
 	// AO_Pitch = FMath::Clamp(AO_Pitch, -55.f, 65.f);
-	UE_LOG(LogTemp, Warning, TEXT("Pitch: %f"), AO_Pitch)
 	
 	if(AO_Pitch >= 90.f && !IsLocallyControlled())
 	{
@@ -228,69 +233,102 @@ void APlayerCharacter::OnCrouchButtonPressed()
 	}
 }
 
+bool APlayerCharacter::CanStandUp() const
+{
+	const FRotator ActorRotator = GetActorRotation();
+	const FVector UpVector = (UKismetMathLibrary::GetUpVector(ActorRotator) * FVector(0.f, 0.f, 180.f)) + GetActorLocation();
+
+	FHitResult HitResult;
+	//check if there is something over the player
+	const bool bCanStandUp = GetWorld()->LineTraceSingleByChannel(HitResult, GetActorLocation(), UpVector, ECC_Visibility);
+	
+	return !bCanStandUp;
+}
+
+void APlayerCharacter::Prone()
+{
+	bIsProne = true;
+	bIsStanding = false;
+
+	GetCharacterMovement()->MaxWalkSpeed = 0.0f;
+	//"delay"
+	FTimerDelegate TimerCallback;
+	TimerCallback.BindLambda([&]
+	{
+		GetCharacterMovement()->MaxWalkSpeed = ProneSpeed;
+	});
+	FTimerHandle Handle;
+	GetWorld()->GetTimerManager().SetTimer(Handle, TimerCallback, 1.3f, false);
+
+	float MeshStartZ = -88.f;
+	const float MeshEndZ = -37.f;
+	
+	
+	// float MeshInterpLocationZ = FMath::FInterpTo(CurrentMeshZ, MeshEndZ, )
+	
+	
+	
+	// GetMesh()->SetRelativeLocation(FVector(0.f, 0.f, MeshEndZ));
+
+	GetCapsuleComponent()->SetCapsuleSize(30.f, 30.f);
+
+	float CurrentMeshZ = GetMesh()->GetRelativeLocation().Z;
+	float OutRadius;
+	float OutHeight;
+	GetCapsuleComponent()->GetUnscaledCapsuleSize(OutRadius, OutHeight);
+}
+
+void APlayerCharacter::StandUp()
+{
+	bIsProne = false;
+	bIsStanding = true;
+
+	GetCharacterMovement()->MaxWalkSpeed = 0.0f;
+	//"delay"
+	FTimerDelegate TimerCallback;
+	TimerCallback.BindLambda([&]
+	{
+		GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
+	});
+	FTimerHandle Handle;
+	GetWorld()->GetTimerManager().SetTimer(Handle, TimerCallback, 1.3f, false);
+
+	// GetMesh()->SetRelativeLocation(FVector(0.f, 0.f, -88.f));
+	GetCapsuleComponent()->SetCapsuleSize(34.f, 88.f);
+
+	float CurrentMeshZ = GetMesh()->GetRelativeLocation().Z;
+	float OutRadius;
+	float OutHeight;
+	GetCapsuleComponent()->GetUnscaledCapsuleSize(OutRadius, OutHeight);
+}
+
 void APlayerCharacter::OnProneButtonPressed()
 {
-	if (bIsProne)
+	Server_Prone();
+}
+
+void APlayerCharacter::Server_Prone_Implementation()
+{
+	Multicast_Prone_Implementation(CanStandUp());
+}
+
+void APlayerCharacter::Multicast_Prone_Implementation(const bool bStandUp)
+{
+	if(bIsProne)
 	{
-		FRotator ActorRotator = GetActorRotation();
-		FVector UpVector = (UKismetMathLibrary::GetUpVector(ActorRotator) * FVector(0.f, 0.f, 180.f)) + GetActorLocation();
-
-		FHitResult HitResult;
-		bool bCanStandUp = GetWorld()->LineTraceSingleByChannel(HitResult, GetActorLocation(), UpVector, ECC_Visibility);
-
-		if(bCanStandUp)
+		if(bStandUp)
 		{
-			bIsProne = false;
-			bIsStanding = true;
-
-			GetCharacterMovement()->MaxWalkSpeed = 0.0f;
-
-			//"delay"
-			FTimerDelegate TimerCallback;
-			TimerCallback.BindLambda([&]
-			{
-				GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
-			});
-
-			FTimerHandle Handle;
-			GetWorld()->GetTimerManager().SetTimer(Handle, TimerCallback, 1.3f, false);
+			StandUp();
 		}
 	}
 	else
 	{
-		bIsProne = true;
-		bIsStanding = false;
-
-		GetCharacterMovement()->MaxWalkSpeed = 0.0f;
-
-		//"delay"
-		FTimerDelegate TimerCallback;
-		TimerCallback.BindLambda([&]
-		{
-			GetCharacterMovement()->MaxWalkSpeed = ProneSpeed;
-		});
-
-		FTimerHandle Handle;
-		GetWorld()->GetTimerManager().SetTimer(Handle, TimerCallback, 1.3f, false);
+		Prone();	
 	}
-	
-	if(!HasAuthority())
-	{
-		Server_OnProneButtonPressed();
-	}
-}
-
-void APlayerCharacter::Server_OnProneButtonPressed_Implementation()
-{
-	OnProneButtonPressed();
-}
-
-bool APlayerCharacter::Server_OnProneButtonPressed_Validate()
-{
-	return true;
 }
 
 //---------------------------------------------- Aim --------------------------------------------------------------
+
 
 void APlayerCharacter::OnAimButtonPressed()
 {

@@ -51,7 +51,7 @@ void AProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* HitActor, UPr
 {
 	if(HitActor && GetOwner())
 	{
-		UGameplayStatics::ApplyDamage(HitActor, 10.f, GetOwner()->GetInstigatorController(), this, TSubclassOf<UDamageType>());
+		UGameplayStatics::ApplyPointDamage(HitActor, 10.f, NormalImpulse, InHit, GetOwner()->GetInstigatorController(), this, TSubclassOf<UDamageType>());
 	}
 	Destroy();
 }

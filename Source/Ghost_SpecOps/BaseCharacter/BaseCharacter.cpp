@@ -20,14 +20,11 @@ ABaseCharacter::ABaseCharacter()
 
 	bIsAlive = true;
 
-	
-
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
 	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 0.f, 850.f);
 	GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
-
 	
 	bReplicates = true;
 	SetReplicatingMovement(true);

@@ -45,6 +45,7 @@ void UBaseCharacterAinmInstance::NativeUpdateAnimation(float DeltaTime)
 	bIsProne = BaseCharacter->bIsProne;
 	bIsStanding = BaseCharacter->bIsStanding;
 	bIsRunning = BaseCharacter->bIsRunning;
+	bIsAlive = BaseCharacter->bIsAlive;
 	TurningInPlace = BaseCharacter->GetTurningInPlace();
 
 	AO_Yaw = BaseCharacter->GetAO_Yaw();

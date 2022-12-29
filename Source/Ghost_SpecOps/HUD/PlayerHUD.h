@@ -5,6 +5,8 @@
 #include "PlayerHUD.generated.h"
 
 class UTexture2D;
+class UCharacterOverlay;
+class UUserWidget;
 
 USTRUCT(BlueprintType)
 struct FHUDPackage
@@ -28,7 +30,17 @@ class GHOST_SPECOPS_API APlayerHUD : public AHUD
 public:
 	virtual void DrawHUD() override;
 
+	UPROPERTY(EditAnywhere, Category = "Player Stats")
+	TSubclassOf<UUserWidget> CharacterOverlayClass;
+	
+	UCharacterOverlay* CharacterOverlay;
+
 	FORCEINLINE void SetHudPackage(const FHUDPackage& InPackage) { HUDPackage = InPackage; }
+
+protected:
+	virtual void BeginPlay() override;
+
+	void AddCharacterOverlay();
 
 private:
 	FHUDPackage HUDPackage;

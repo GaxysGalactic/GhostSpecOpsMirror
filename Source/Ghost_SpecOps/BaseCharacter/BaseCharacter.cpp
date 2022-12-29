@@ -42,10 +42,11 @@ void ABaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME(ABaseCharacter, bIsAiming)
-	DOREPLIFETIME(ABaseCharacter, bIsRunning)
-	DOREPLIFETIME(ABaseCharacter, bIsProne)
-	DOREPLIFETIME(ABaseCharacter, bIsStanding)
+	DOREPLIFETIME(ABaseCharacter, bIsAiming);
+	DOREPLIFETIME(ABaseCharacter, bIsRunning);
+	DOREPLIFETIME(ABaseCharacter, bIsProne);
+	DOREPLIFETIME(ABaseCharacter, bIsStanding);
+	DOREPLIFETIME(ABaseCharacter, BaseHealth);
 
 }
 
@@ -62,6 +63,11 @@ void ABaseCharacter::BeginPlay()
 			CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, WeaponSocketName);
 		}
 	}
+}
+
+void ABaseCharacter::OnRep_Health()
+{
+	//function called when health is replicated
 }
 
 FVector ABaseCharacter::GetHitTarget() const

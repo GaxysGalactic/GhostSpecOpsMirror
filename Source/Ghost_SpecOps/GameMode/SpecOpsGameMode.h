@@ -5,9 +5,10 @@
 #include "CoreMinimal.h"
 #include "GameFramework/GameMode.h"
 #include "Ghost_SpecOps/Player/GhostPlayerController.h"
+#include "Ghost_SpecOps/Player/PlayerCharacter.h"
 #include "SpecOpsGamemode.generated.h"
 
-class ABaseCharacter;
+class APlayerCharacter;
 class AGhostPlayerController;
 
 
@@ -17,6 +18,6 @@ class GHOST_SPECOPS_API ASpecOpsGameMode : public AGameMode
 	GENERATED_BODY()
 
 public:
-	virtual void PlayerEliminated(ABaseCharacter* ElimCharacter, AGhostPlayerController* VictimController, AGhostPlayerController* AttackerController);
-	
+	virtual void PlayerEliminated(APlayerCharacter* ElimCharacter, AGhostPlayerController* VictimController, AGhostPlayerController* AttackerController);
+	virtual void RequestRespawn(ACharacter* EliminatedCharacter, AController* EliminatedController);
 };

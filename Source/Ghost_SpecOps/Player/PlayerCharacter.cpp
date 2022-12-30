@@ -100,7 +100,7 @@ void APlayerCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const U
 {
 	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
 	UpdateHUDHealth();
-	//PLayeHitReactMontage();
+	//PlayeHitReactMontage();
 
 	if(Health <= 0.f)
 	{
@@ -131,6 +131,30 @@ void APlayerCharacter::UpdateHUDHealth()
 	{
 		PlayerController->SetHUDHealth(Health, MaxHealth);
 	}
+}
+
+//--------------------------------------------- Die -----------------------------------------------------------------
+
+void APlayerCharacter::Die()
+{
+	Multicast_Die();
+}
+
+void APlayerCharacter::Multicast_Die_Implementation()
+{
+	bIsAlive = false;
+
+	//Disable character movement
+	GetCharacterMovement()->DisableMovement();
+	GetCharacterMovement()->StopMovementImmediately();
+	if(PlayerController)
+	{
+		DisableInput(PlayerController);
+	}
+
+	//Disable Collision
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 //------------------------------------------- Movement ------------------------------------------------------------

@@ -29,6 +29,11 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return CameraComponent; }
 
+	void Die();
+	
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_Die();
+
 	UAIPerceptionStimuliSourceComponent* AIPerception;
 
 private:

@@ -20,6 +20,8 @@ public:
 	virtual void PostInitializeComponents() override;
 	void PlayFireMontage(bool bInAiming) const;
 
+	
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = DEFAULTS, Replicated)
 	bool bIsProne;
 	
@@ -40,7 +42,6 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
-	 void Die();
 	//---------------------------------- Character Weapon settings ---------------------------------------------
 	UPROPERTY(EditDefaultsOnly, Category = Combat)
 	TSubclassOf<AWeapon> StartingWeaponClass;

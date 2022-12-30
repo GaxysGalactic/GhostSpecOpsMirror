@@ -8,6 +8,7 @@
 #include "Components/SplineComponent.h"
 #include "Components/StateTreeComponent.h"
 #include "Components/WidgetComponent.h"
+#include "Engine/DamageEvents.h"
 #include "Ghost_SpecOps/Civilian/CivilianCharacter.h"
 #include "Ghost_SpecOps/Player/PlayerCharacter.h"
 #include "Kismet/GameplayStatics.h"
@@ -83,12 +84,24 @@ void AEnemyCharacter::StartStateTree() const
 float AEnemyCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator,
 	AActor* DamageCauser)
 {
+	// Client side stuff. 	
+	if(!HasAuthority())
+	{
+		return Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+	}
+	
 	Health -= DamageAmount;
 
 	// Rotate to face
 	if(AggroList.IsEmpty())
 	{
-		//TODO: Rotate to face after ApplyPointDamage
+		if (DamageEvent.IsOfType(FPointDamageEvent::ClassID))
+		{
+			const FPointDamageEvent* const PointDamageEvent = (FPointDamageEvent*) (&DamageEvent);
+			const FRotator Rotator = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), PointDamageEvent->ShotDirection);
+			Controller->SetControlRotation(Rotator);
+		}
+		
 	}
 	
 	// Death

@@ -62,6 +62,11 @@ void ABaseCharacter::BeginPlay()
 	}
 }
 
+void ABaseCharacter::Die()
+{
+	
+}
+
 void ABaseCharacter::OnRep_Health()
 {
 	//function called when health is replicated

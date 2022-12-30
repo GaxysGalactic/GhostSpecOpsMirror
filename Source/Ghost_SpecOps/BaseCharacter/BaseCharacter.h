@@ -40,7 +40,7 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
-
+	 void Die();
 	//---------------------------------- Character Weapon settings ---------------------------------------------
 	UPROPERTY(EditDefaultsOnly, Category = Combat)
 	TSubclassOf<AWeapon> StartingWeaponClass;

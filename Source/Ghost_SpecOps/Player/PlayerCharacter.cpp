@@ -3,6 +3,7 @@
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Ghost_SpecOps/Components/PlayerCombatComponent.h"
+#include "Ghost_SpecOps/GameMode/SpecOpsGameMode.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
@@ -100,6 +101,18 @@ void APlayerCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const U
 	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
 	UpdateHUDHealth();
 	//PLayeHitReactMontage();
+
+	if(Health <= 0.f)
+	{
+		ASpecOpsGameMode* SpecOpsGameMode = GetWorld()->GetAuthGameMode<ASpecOpsGameMode>();
+
+		if(SpecOpsGameMode)
+		{
+			PlayerController = PlayerController == nullptr ? Cast<AGhostPlayerController>(Controller) : PlayerController;
+			AGhostPlayerController* AttackerController = Cast<AGhostPlayerController>(InstigatorController);
+			SpecOpsGameMode->PlayerEliminated(this, PlayerController, AttackerController);
+		}
+	}
 }
 
 void APlayerCharacter::OnRep_Health()

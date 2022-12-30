@@ -18,7 +18,8 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void PostInitializeComponents() override;
-	void PlayFireMontage(bool bInAiming) const;
+	
+	virtual void PlayFireMontage(bool bInAiming) const;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = DEFAULTS, Replicated)
 	bool bIsProne;

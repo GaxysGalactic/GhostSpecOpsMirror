@@ -140,5 +140,7 @@ public:
 	AActor* GetFirstInAggro() const;
 
 	UEnemyCombatComponent* GetEnemyCombatComponent() const { return EnemyCombatComponent; }
+
+	virtual void PlayFireMontage(bool bInAiming) const override;
 	
 };

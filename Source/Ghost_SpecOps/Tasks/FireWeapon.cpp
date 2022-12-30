@@ -12,7 +12,7 @@ EStateTreeRunStatus UFireWeapon::EnterState(FStateTreeExecutionContext& Context,
 	AEnemyCharacter* EnemyCharacter = Cast<AEnemyCharacter>(Actor);
 	if(EnemyCharacter)
 	{
-		EnemyCharacter->GetWorldTimerManager().SetTimer(FireTimer, this, &UFireWeapon::ChangeFire, 2.f, true);
+		EnemyCharacter->GetWorldTimerManager().SetTimer(FireTimer, this, &UFireWeapon::ChangeFire, 1.5f, true);
 	}
 	return Super::EnterState(Context, Transition);
 }

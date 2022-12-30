@@ -9,6 +9,7 @@
 #include "Components/StateTreeComponent.h"
 #include "Components/WidgetComponent.h"
 #include "Engine/DamageEvents.h"
+#include "Engine/StaticMeshSocket.h"
 #include "Ghost_SpecOps/Civilian/CivilianCharacter.h"
 #include "Ghost_SpecOps/Components/EnemyCombatComponent.h"
 #include "Ghost_SpecOps/Player/PlayerCharacter.h"
@@ -255,6 +256,31 @@ void AEnemyCharacter::Chase()
 void AEnemyCharacter::HideWidget() const
 {
 	WidgetComponent->SetVisibility(false);
+}
+
+void AEnemyCharacter::PlayFireMontage(bool bAiming) const
+{
+	if (!EnemyCombatComponent || !CurrentWeapon || !CurrentWeapon->GetWeaponMesh()) return;
+
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	FTransform SocketTransform{};
+
+	const UStaticMeshSocket* BarrelSocket = CurrentWeapon->GetWeaponMesh()->GetSocketByName(FName("MuzzleFlash"));
+	if (AnimInstance && FireWeaponMontage && CurrentWeapon->GetFireSound() && CurrentWeapon->GetMuzzleFlash() && BarrelSocket)
+	{
+		BarrelSocket->GetSocketTransform(SocketTransform, CurrentWeapon->GetWeaponMesh());
+		UGameplayStatics::SpawnEmitterAtLocation(
+			GetWorld(),
+			CurrentWeapon->GetMuzzleFlash(),
+			SocketTransform
+			);
+		
+		UGameplayStatics::PlaySoundAtLocation(this, CurrentWeapon->GetFireSound(), GetActorLocation(), GetActorRotation(), 0.5f);
+		
+		AnimInstance->Montage_Play(FireWeaponMontage);
+		const FName SectionName = bAiming ? FName("RifleAim") : FName("RifleHip");
+		AnimInstance->Montage_JumpToSection(SectionName);
+	}
 }
 
 void AEnemyCharacter::UpdatePatrolIndex()

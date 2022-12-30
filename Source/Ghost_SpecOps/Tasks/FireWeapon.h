@@ -33,6 +33,6 @@ protected:
 	FTimerHandle FireTimer;
 
 	/** Current fire state */
-	bool bIsFiring = true;
+	bool bIsFiring = false;
 	
 };

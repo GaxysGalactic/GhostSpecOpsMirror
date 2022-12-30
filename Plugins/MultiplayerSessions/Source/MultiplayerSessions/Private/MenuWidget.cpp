@@ -4,62 +4,11 @@
 #include "MenuWidget.h"
 
 #include "MultiplayerSessionsSubsystem.h"
-#include "OnlineSubsystem.h"
 #include "Components/Button.h"
-#include "Kismet/GameplayStatics.h"
 
-//-------------------------------------------------------------------------------------------------
-UMenuWidget::UMenuWidget(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+void UMenuWidget::NativeConstruct()
 {
-	MaxPublicConnections = 4;
-	MatchType = TEXT("FreeForAll");
-}
-
-//-------------------------------------------------------------------------------------------------
-void UMenuWidget::SetUpMenu(int32 InMaxPublicConnections, const FString& InMatchType, const FString& InPathToLobby)
-{
-	AddToViewport();
-	SetVisibility(ESlateVisibility::Visible);
-
-	MaxPublicConnections = InMaxPublicConnections;
-	MatchType = InMatchType;
-
-	PathToLobby = InPathToLobby + TEXT("?listen");
-	bIsFocusable = true;
-
-	if (APlayerController* PlayerController = UGameplayStatics::GetPlayerController(this, 0))
-	{
-		FInputModeUIOnly InputModeData;
-		InputModeData.SetWidgetToFocus(TakeWidget());
-		InputModeData.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
-
-		PlayerController->SetInputMode(InputModeData);
-		PlayerController->SetShowMouseCursor(true);
-	}
-
-	if (const UGameInstance* GameInstance = GetGameInstance())
-	{
-		MultiplayerSessionsSubsystemPtr = GameInstance->GetSubsystem<UMultiplayerSessionsSubsystem>();
-
-		if (UMultiplayerSessionsSubsystem* SessionsSubsystem = MultiplayerSessionsSubsystemPtr.Get())
-		{
-			SessionsSubsystem->OnCreateSessionCompleteDelegate.AddDynamic(this, &UMenuWidget::OnCreateSessionComplete);
-			SessionsSubsystem->OnDestroySessionCompleteDelegate.AddDynamic(this, &UMenuWidget::OnDestroySessionComplete);
-			SessionsSubsystem->OnStartSessionCompleteDelegate.AddDynamic(this, &UMenuWidget::OnStartSessionComplete);
-
-			SessionsSubsystem->OnFindSessionsCompleteDelegate.AddUObject(this, &UMenuWidget::OnFindSessionsComplete);
-			SessionsSubsystem->OnJoinSessionCompleteDelegate.AddUObject(this, &UMenuWidget::OnJoinSessionComplete);
-		}
-	}
-}
-
-//-------------------------------------------------------------------------------------------------
-bool UMenuWidget::Initialize()
-{
-	if (!Super::Initialize())
-	{
-		return false;
-	}
+	Super::NativeConstruct();
 
 	if (HostButton)
 	{
@@ -70,8 +19,6 @@ bool UMenuWidget::Initialize()
 	{
 		JoinButton->OnClicked.AddDynamic(this, &UMenuWidget::OnJoinButtonClicked);
 	}
-
-	return true;
 }
 
 void UMenuWidget::NativeDestruct()
@@ -80,139 +27,165 @@ void UMenuWidget::NativeDestruct()
 	Super::NativeDestruct();
 }
 
-//-------------------------------------------------------------------------------------------------
-// ReSharper disable once CppMemberFunctionMayBeConst
-void UMenuWidget::OnCreateSessionComplete(bool bWasSuccessful)
+void UMenuWidget::OnMultiplayerSessionCreated(const FName SessionName, const bool bWasSuccessful)
 {
 	if (bWasSuccessful)
 	{
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(INDEX_NONE, 15.f, FColor::Green, FString("Session Created Successfully!"));
-		}
-
-		GetWorld()->ServerTravel(PathToLobby);
+		GetWorld()->ServerTravel(FString::Printf(TEXT("%s?listen"), *PathToLobby));
 	}
-
 	else
 	{
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(INDEX_NONE, 15.f, FColor::Red, FString("Session Failed to Create..."));
-		}
-
-		SetButtonsEnabled(true);
+		EnableButtons();
 	}
 }
 
-//-------------------------------------------------------------------------------------------------
-void UMenuWidget::OnDestroySessionComplete(bool bWasSuccessful)
+void UMenuWidget::OnMultiplayerSessionsFound(const TArray<FOnlineSessionSearchResult>& SearchResults, const bool bWasSuccessful)
 {
-}
+	GEngine->AddOnScreenDebugMessage(INDEX_NONE, 90.f, FColor::Cyan, TEXT("UMenuWidget::OnMultiplayerSessionsFound Called!!"));
 
-//-------------------------------------------------------------------------------------------------
-void UMenuWidget::OnStartSessionComplete(bool bWasSuccessful)
-{
-}
-
-void UMenuWidget::OnFindSessionsComplete(bool bWasSuccessful, const TArray<FOnlineSessionSearchResult>& SessionResults)
-{
-	if (!bWasSuccessful || SessionResults.Num() == 0)
+	if (!MultiplayerSessionsSubsystem || !bWasSuccessful)
 	{
-		SetButtonsEnabled(true);
+		GEngine->AddOnScreenDebugMessage(INDEX_NONE, 90.f, FColor::Red, FString::Printf(TEXT("Not successful!")));
+		EnableButtons();
 		return;
 	}
 
-	if (UMultiplayerSessionsSubsystem* SessionsSubsystem = MultiplayerSessionsSubsystemPtr.Get())
+	for (const FOnlineSessionSearchResult& SearchResult : SearchResults)
 	{
-		for (const FOnlineSessionSearchResult& Result : SessionResults)
-		{
-			FString ResultMatchType;
-			Result.Session.SessionSettings.Get(FName("MatchType"), ResultMatchType);
 
-			if (ResultMatchType == MatchType)
-			{
-				SessionsSubsystem->JoinSession(Result);
-				return;
-			}
+		FString ResultMatchType;
+		SearchResult.Session.SessionSettings.Get(TEXT("MatchType"), ResultMatchType);
+		GEngine->AddOnScreenDebugMessage(INDEX_NONE, 90.f, FColor::Yellow, FString::Printf(TEXT("Some session Found with match type %s!!"), *ResultMatchType));
+
+		if (ResultMatchType == MatchType)
+		{
+			GEngine->AddOnScreenDebugMessage(INDEX_NONE, 90.f, FColor::Green, TEXT("Valid Session Found!!"));
+			MultiplayerSessionsSubsystem->JoinSession(SearchResult);
+			return;
 		}
 	}
 
-	// This won't execute if a valid session is found
-	SetButtonsEnabled(true);
+	GEngine->AddOnScreenDebugMessage(INDEX_NONE, 90.f, FColor::Red, FString::Printf(TEXT("Successful but empty!")));
+	EnableButtons();
 }
 
-//-------------------------------------------------------------------------------------------------
-// ReSharper disable once CppMemberFunctionMayBeConst
-void UMenuWidget::OnJoinSessionComplete(EOnJoinSessionCompleteResult::Type Result)
+void UMenuWidget::OnMultiplayerSessionJoined(const EOnJoinSessionCompleteResult::Type Result)
 {
-	if (Result != EOnJoinSessionCompleteResult::Success)
+	if (!MultiplayerSessionsSubsystem || Result != EOnJoinSessionCompleteResult::Success)
 	{
-		SetButtonsEnabled(true);
+		EnableButtons();
 		return;
 	}
-	
-	if (const IOnlineSubsystem* OnlineSubsystem = IOnlineSubsystem::Get())
-	{
-		if (const IOnlineSessionPtr SessionInterface = OnlineSubsystem->GetSessionInterface())
-		{
-			FString ConnectInfo;
-			SessionInterface->GetResolvedConnectString(NAME_GameSession, ConnectInfo);
 
-			if (APlayerController* PlayerController = UGameplayStatics::GetPlayerController(this, 0))
-			{
-				PlayerController->ClientTravel(ConnectInfo, TRAVEL_Absolute);
-			}
-		}
+	IOnlineSessionPtr OnlineSessionInterface = MultiplayerSessionsSubsystem->GetOnlineSubsystemInterface();
+	if (!OnlineSessionInterface.IsValid())
+	{
+		EnableButtons();
+		return;
+	}
+
+	FString Address;
+	OnlineSessionInterface->GetResolvedConnectString(NAME_GameSession, Address);
+
+	if (APlayerController* PlayerController = GetGameInstance()->GetFirstLocalPlayerController())
+	{
+		PlayerController->ClientTravel(Address, TRAVEL_Absolute);
+		return;
+	}
+
+	EnableButtons();
+}
+
+void UMenuWidget::OnMultiplayerSessionDestroyed(const bool bWasSuccessful)
+{
+}
+
+void UMenuWidget::OnMultiplayerSessionStarted(const FName SessionName, const bool bWasSuccessful)
+{
+}
+
+void UMenuWidget::SetupMenu(const int32 NewMaxSearchSessions, const FString& NewMatchType, const FString& NewPathToLobby)
+{
+	AddToViewport();
+	SetVisibility(ESlateVisibility::Visible);
+	bIsFocusable = true;
+
+	MaxSessionSearches = NewMaxSearchSessions;
+	MatchType = NewMatchType;
+	PathToLobby = NewPathToLobby;
+
+	if (APlayerController* PlayerController = GetWorld()->GetFirstPlayerController())
+	{
+		FInputModeUIOnly InputModeData;
+		InputModeData.SetWidgetToFocus(TakeWidget());
+		InputModeData.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+		PlayerController->SetInputMode(InputModeData);
+		PlayerController->SetShowMouseCursor(true);
+	}
+
+	MultiplayerSessionsSubsystem = UMultiplayerSessionsSubsystem::Get(GetGameInstance());
+	if (MultiplayerSessionsSubsystem)
+	{
+		MultiplayerSessionsSubsystem->OnMultiplayerSessionCreatedDelegate.AddDynamic(this, &UMenuWidget::OnMultiplayerSessionCreated);
+		MultiplayerSessionsSubsystem->OnMultiplayerFindSessionsComplete.AddUObject(this, &UMenuWidget::OnMultiplayerSessionsFound);
+		MultiplayerSessionsSubsystem->OnMultiplayerJoinSessionComplete.AddUObject(this, &UMenuWidget::OnMultiplayerSessionJoined);
+		MultiplayerSessionsSubsystem->OnMultiplayerSessionDestroyed.AddDynamic(this, &UMenuWidget::OnMultiplayerSessionDestroyed);
+		MultiplayerSessionsSubsystem->OnMultiplayerSessionStarted.AddDynamic(this, &UMenuWidget::OnMultiplayerSessionStarted);
 	}
 }
 
-//-------------------------------------------------------------------------------------------------
-// ReSharper disable once CppMemberFunctionMayBeConst
 void UMenuWidget::TearDownMenu()
 {
-	if (APlayerController* PlayerController = UGameplayStatics::GetPlayerController(this, 0))
+	RemoveFromParent();
+
+	if (APlayerController* PlayerController = GetWorld()->GetFirstPlayerController())
 	{
-		const FInputModeGameOnly InputModeData;
-		PlayerController->SetInputMode(InputModeData);
+		PlayerController->SetInputMode(FInputModeGameOnly());
 		PlayerController->SetShowMouseCursor(false);
 	}
 }
 
-// ReSharper disable once CppMemberFunctionMayBeConst
-void UMenuWidget::SetButtonsEnabled(bool bShouldEnable)
+void UMenuWidget::OnHostButtonClicked()
+{
+	if (MultiplayerSessionsSubsystem)
+	{
+		MultiplayerSessionsSubsystem->RequestCreateSession(4, MatchType);
+		DisableButtons();
+	}
+}
+
+void UMenuWidget::OnJoinButtonClicked()
+{
+	GEngine->AddOnScreenDebugMessage(INDEX_NONE, 90.f, FColor::Cyan, TEXT("OnJoinButtonClicked!"));
+	if (MultiplayerSessionsSubsystem)
+	{
+		MultiplayerSessionsSubsystem->FindSessions(MaxSessionSearches);
+		DisableButtons();
+	}
+}
+
+void UMenuWidget::EnableButtons()
 {
 	if (HostButton)
 	{
-		HostButton->SetIsEnabled(bShouldEnable);
+		HostButton->SetIsEnabled(true);
 	}
 
 	if (JoinButton)
 	{
-		JoinButton->SetIsEnabled(bShouldEnable);
+		JoinButton->SetIsEnabled(true);
 	}
 }
 
-//-------------------------------------------------------------------------------------------------
-// ReSharper disable once CppMemberFunctionMayBeConst
-void UMenuWidget::OnHostButtonClicked()
+void UMenuWidget::DisableButtons()
 {
-	SetButtonsEnabled(false);
-	
-	if (UMultiplayerSessionsSubsystem* SessionsSubsystem = MultiplayerSessionsSubsystemPtr.Get())
+	if (HostButton)
 	{
-		SessionsSubsystem->CreateSession(MaxPublicConnections, MatchType);
+		HostButton->SetIsEnabled(false);
 	}
-}
 
-//-------------------------------------------------------------------------------------------------
-// ReSharper disable once CppMemberFunctionMayBeConst
-void UMenuWidget::OnJoinButtonClicked()
-{
-	SetButtonsEnabled(false);
-	
-	if (UMultiplayerSessionsSubsystem* SessionsSubsystem = MultiplayerSessionsSubsystemPtr.Get())
+	if (JoinButton)
 	{
-		SessionsSubsystem->FindSessions(10000);
+		JoinButton->SetIsEnabled(false);
 	}
 }

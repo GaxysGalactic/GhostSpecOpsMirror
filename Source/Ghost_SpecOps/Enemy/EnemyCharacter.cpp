@@ -10,6 +10,7 @@
 #include "Components/WidgetComponent.h"
 #include "Engine/DamageEvents.h"
 #include "Ghost_SpecOps/Civilian/CivilianCharacter.h"
+#include "Ghost_SpecOps/Components/EnemyCombatComponent.h"
 #include "Ghost_SpecOps/Player/PlayerCharacter.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
@@ -35,6 +36,9 @@ AEnemyCharacter::AEnemyCharacter() :
 	WidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("Widget"));
 	WidgetComponent->SetupAttachment(RootComponent);
 	WidgetComponent->SetVisibility(false);
+
+	EnemyCombatComponent = CreateDefaultSubobject<UEnemyCombatComponent>(TEXT("CombatComponent"));
+	EnemyCombatComponent->SetIsReplicated(true);
 
 	// Delegate Binding
 	PerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this, &AEnemyCharacter::ProcessStimuli);
@@ -74,6 +78,15 @@ void AEnemyCharacter::Tick(float DeltaSeconds)
 	WidgetComponent->SetWorldRotation(Rotator);
 	
 	Super::Tick(DeltaSeconds);
+}
+
+void AEnemyCharacter::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+	if(EnemyCombatComponent)
+	{
+		EnemyCombatComponent->EnemyCharacter = this;
+	}
 }
 
 void AEnemyCharacter::StartStateTree() const

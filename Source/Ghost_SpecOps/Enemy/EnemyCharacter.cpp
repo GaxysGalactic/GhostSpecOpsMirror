@@ -311,6 +311,15 @@ void AEnemyCharacter::UpdatePatrolIndex()
 	}
 }
 
+AActor* AEnemyCharacter::GetFirstInAggro() const
+{
+	if(!AggroList.IsEmpty())
+	{
+		return AggroList[0];
+	}
+	return nullptr;
+}
+
 void AEnemyCharacter::MulticastChaseBark_Implementation()
 {
 	UGameplayStatics::PlaySoundAtLocation(this, AlertSound, GetActorLocation(), GetActorRotation());
@@ -318,8 +327,6 @@ void AEnemyCharacter::MulticastChaseBark_Implementation()
 
 	FTimerHandle TurnOffWidgetHandle;
 	GetWorldTimerManager().SetTimer(TurnOffWidgetHandle, this, &AEnemyCharacter::HideWidget, 2.f, false);
-
-	UE_LOG(LogTemp, Warning, TEXT("bark!"));
 }
 
 bool AEnemyCharacter::MulticastChaseBark_Validate()

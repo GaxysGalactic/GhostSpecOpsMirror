@@ -83,7 +83,8 @@ void UEnemyCombatComponent::FinishFireTimer()
 
 void UEnemyCombatComponent::TraceAroundTarget(FHitResult& TraceHitResult)
 {
-	FVector Start = EnemyCharacter->GetActorLocation();
+	FVector Start = EnemyCharacter->GetWeapon()->GetWeaponMesh()->GetSocketLocation("Muzzle Flash");
+	Start += EnemyCharacter->GetActorForwardVector() * 50.0f;
 
 	AActor* TargetActor = EnemyCharacter->GetFirstInAggro();
 
@@ -111,6 +112,8 @@ void UEnemyCombatComponent::TraceAroundTarget(FHitResult& TraceHitResult)
 		{
 			TraceHitResult.ImpactPoint = End;
 		}
+
+		//DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 2.f);
 		
 	}
 	

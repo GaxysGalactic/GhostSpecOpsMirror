@@ -137,6 +137,8 @@ public:
 	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, WithValidation, Category = Animation)
 	void MulticastChaseBark();
 
-	AActor* GetFirstInAggro() const { return AggroList[0]; }
+	AActor* GetFirstInAggro() const;
+
+	UEnemyCombatComponent* GetEnemyCombatComponent() const { return EnemyCombatComponent; }
 	
 };

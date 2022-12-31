@@ -13,4 +13,8 @@ class GHOST_SPECOPS_API ALobbyGameMode : public AGameModeBase
 
 protected:
 	virtual void PostLogin(APlayerController* NewPlayer) override;
+
+public:
+	UFUNCTION(BlueprintCallable)
+	void ChangeLevel();
 };

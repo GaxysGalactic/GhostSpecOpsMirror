@@ -12,10 +12,19 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
 
 	if (GameState)
 	{
-		if (GameState->PlayerArray.Num() >= 2)
+		if (GameState->PlayerArray.Num() >= 3)
 		{
-			bUseSeamlessTravel = true;
-			GetWorld()->ServerTravel("/Game/Game/Levels/SnowMap_01");
+			ChangeLevel();
 		}
 	}
+}
+
+void ALobbyGameMode::ChangeLevel()
+{
+	if(GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Magenta, TEXT("Change level"));
+	}
+	bUseSeamlessTravel= true;
+	GetWorld()->ServerTravel("/Game/Game/Levels/SnowMap_01");
 }

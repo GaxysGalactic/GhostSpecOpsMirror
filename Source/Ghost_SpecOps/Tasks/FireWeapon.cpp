@@ -3,6 +3,7 @@
 
 #include "FireWeapon.h"
 
+#include "StateTreeExecutionContext.h"
 #include "Ghost_SpecOps/Components/EnemyCombatComponent.h"
 #include "Ghost_SpecOps/Enemy/EnemyCharacter.h"
 
@@ -20,7 +21,7 @@ EStateTreeRunStatus UFireWeapon::EnterState(FStateTreeExecutionContext& Context,
 EStateTreeRunStatus UFireWeapon::Tick(FStateTreeExecutionContext& Context, const float DeltaTime)
 {
 	AEnemyCharacter* EnemyCharacter = Cast<AEnemyCharacter>(Actor);
-	if(EnemyCharacter)
+	if(EnemyCharacter && EnemyCharacter->HasAggro())
 	{
 		EnemyCharacter->GetEnemyCombatComponent()->OrderToFire(bIsFiring);
 	}
@@ -30,6 +31,13 @@ EStateTreeRunStatus UFireWeapon::Tick(FStateTreeExecutionContext& Context, const
 
 void UFireWeapon::ExitState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition)
 {
+	AEnemyCharacter* EnemyCharacter = Cast<AEnemyCharacter>(Actor);
+	if(Context.GetStateFromHandle(Transition.TargetState)->Name == "Death" ||
+		Context.GetStateFromHandle(Transition.TargetState)->Name == "Retreat" )
+	{
+		EnemyCharacter->GetWorldTimerManager().ClearTimer(FireTimer);
+		EnemyCharacter->GetEnemyCombatComponent()->OrderToFire(false);
+	}
 	Super::ExitState(Context, Transition);
 }
 

@@ -139,6 +139,8 @@ public:
 
 	AActor* GetFirstInAggro() const;
 
+	bool HasAggro() const { return !AggroList.IsEmpty(); }
+
 	UEnemyCombatComponent* GetEnemyCombatComponent() const { return EnemyCombatComponent; }
 
 	virtual void PlayFireMontage(bool bInAiming) const override;

@@ -43,6 +43,9 @@ AEnemyCharacter::AEnemyCharacter() :
 
 	// Delegate Binding
 	PerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this, &AEnemyCharacter::ProcessStimuli);
+
+	// Actor Tags
+	Tags.Add("Keycard");
 }
 
 void AEnemyCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -98,8 +101,8 @@ void AEnemyCharacter::StartStateTree() const
 float AEnemyCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator,
 	AActor* DamageCauser)
 {
-	// Client side stuff. 	
-	if(!HasAuthority())
+	// Client side stuff and error handling 	
+	if(!HasAuthority() || !bIsAlive)
 	{
 		return Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 	}

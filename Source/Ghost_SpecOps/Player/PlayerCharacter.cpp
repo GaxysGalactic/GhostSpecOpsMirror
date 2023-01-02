@@ -63,6 +63,9 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &APlayerCharacter::OnFireButtonPressed);
 	PlayerInputComponent->BindAction("Fire", IE_Released, this, &APlayerCharacter::OnFireButtonReleased);
 
+	PlayerInputComponent->BindAction("Reload", IE_Pressed, this, &APlayerCharacter::OnReloadButtonPressed);
+
+	
 	PlayerInputComponent->BindAction("Aim", IE_Pressed, this, &APlayerCharacter::OnAimButtonPressed);
 	PlayerInputComponent->BindAction("Aim", IE_Released, this, &APlayerCharacter::OnAimButtonReleased);
 
@@ -281,6 +284,14 @@ void APlayerCharacter::CalculateAimOffset(float DeltaTime)
 		const FVector2d InRage(270.f, 360.f);
 		const FVector2d OutRange(-90.f, 0.f);
 		AO_Pitch = FMath::GetMappedRangeValueClamped(InRage, OutRange, AO_Pitch);
+	}
+}
+
+void APlayerCharacter::OnReloadButtonPressed()
+{
+	if(CombatComponent)
+	{
+		CombatComponent->Reload();
 	}
 }
 

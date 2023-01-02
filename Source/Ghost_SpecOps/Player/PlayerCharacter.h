@@ -79,6 +79,8 @@ protected:
 
 	void CalculateAimOffset(float DeltaTime);
 
+	void OnReloadButtonPressed();
+
 	//---------------------------------------- Crouch & Prone ---------------------------------------------------------
 
 	void OnCrouchButtonPressed();

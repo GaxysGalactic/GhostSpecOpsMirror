@@ -1,5 +1,6 @@
 #include "BaseCharacter.h"
 
+#include "../../../Plugins/Developer/RiderLink/Source/RD/thirdparty/clsocket/src/ActiveSocket.h"
 #include "Components/CapsuleComponent.h"
 #include "Engine/StaticMeshSocket.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -77,6 +78,15 @@ FVector ABaseCharacter::GetHitTarget() const
 	return FVector();
 }
 
+ECombatStates ABaseCharacter::GetCombatSate() const
+{
+	if(CombatComponent)
+	{
+		return CombatComponent->CombatState;
+	}
+	return ECombatStates::ECS_MAX;
+}
+
 void ABaseCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -108,6 +118,32 @@ void ABaseCharacter::PlayFireMontage(bool bAiming) const
 		
 		AnimInstance->Montage_Play(FireWeaponMontage);
 		const FName SectionName = bAiming ? FName("RifleAim") : FName("RifleHip");
+		AnimInstance->Montage_JumpToSection(SectionName);
+	}
+}
+
+void ABaseCharacter::PlayReloadMontage() const
+{
+	if (!CombatComponent || !CurrentWeapon || !CurrentWeapon->GetWeaponMesh())
+	{
+		return;
+	}
+
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && ReloadMontage)
+	{
+		UGameplayStatics::PlaySound2D(this, CurrentWeapon->GetFireSound());
+		
+		AnimInstance->Montage_Play(ReloadMontage);
+		FName SectionName;
+		switch (CurrentWeapon->GetWeaponType())
+		{
+			case EWeaponTypes::EWT_AssaultRifle:
+				SectionName = FName("Rifle");
+				break;
+			
+			default: ;
+		}
 		AnimInstance->Montage_JumpToSection(SectionName);
 	}
 }

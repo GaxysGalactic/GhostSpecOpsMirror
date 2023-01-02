@@ -77,7 +77,8 @@ void UBaseCharacterAinmInstance::NativeUpdateAnimation(float DeltaTime)
 			// DrawDebugLine(GetWorld(), MuzzleTipTransform.GetLocation(), BaseCharacter->GetHitTarget(), FColor::Orange);
 			
 		}
-		
 	}
+
+	bUseFabrik = BaseCharacter->GetCombatSate() != ECombatStates::ECS_Reloading;
 
 }

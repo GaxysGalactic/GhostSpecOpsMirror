@@ -17,6 +17,7 @@ void UPlayerCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME_CONDITION(UPlayerCombatComponent, CarriedAmmo, COND_OwnerOnly);
+	DOREPLIFETIME(UPlayerCombatComponent, CombatState);
 }
 
 void UPlayerCombatComponent::BeginPlay()
@@ -88,6 +89,52 @@ void UPlayerCombatComponent::FireButtonPressed(bool bPressed)
 	if (bFireButtonPressed)
 	{
 		Fire();
+	}
+}
+
+void UPlayerCombatComponent::Reload()
+{
+	if(CarriedAmmo > 0 && CombatState != ECombatStates::ECS_Reloading)
+	{
+		Server_Reload();		
+	}
+}
+
+void UPlayerCombatComponent::FinishReload()
+{
+	if(PlayerCharacter == nullptr)
+	{
+		return;
+	}
+	if(PlayerCharacter->HasAuthority())
+	{
+		CombatState = ECombatStates::ECS_Unoccupied;
+	}
+}
+
+void UPlayerCombatComponent::Server_Reload_Implementation()
+{
+	if(PlayerCharacter == nullptr)
+	{
+		return;
+	}
+	CombatState = ECombatStates::ECS_Reloading;
+	HandleReload();
+}
+
+void UPlayerCombatComponent::HandleReload()
+{
+	PlayerCharacter->PlayReloadMontage();
+
+}
+
+void UPlayerCombatComponent::OnRep_CombatState()
+{
+	switch (CombatState)
+	{
+	case ECombatStates::ECS_Reloading:
+		HandleReload();
+		break;
 	}
 }
 
@@ -284,3 +331,5 @@ void UPlayerCombatComponent::InitializeCarriedAmmo()
 {
 	CarriedAmmoMap.Emplace(EWeaponTypes::EWT_AssaultRifle, StartingARAmmo);
 }
+
+

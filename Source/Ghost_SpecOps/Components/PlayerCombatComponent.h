@@ -4,6 +4,7 @@
 #include "Components/ActorComponent.h"
 #include "Ghost_SpecOps/Player/GhostPlayerController.h"
 #include "Ghost_SpecOps/Player/PlayerCharacter.h"
+#include "Ghost_SpecOps/Types/CombatStates.h"
 #include "Ghost_SpecOps/Types/WeaponTypes.h"
 #include "PlayerCombatComponent.generated.h"
 
@@ -30,6 +31,11 @@ public:
 
 	void FireButtonPressed(bool bInState);
 
+	void Reload();
+
+	UFUNCTION(BlueprintCallable)
+	void FinishReload();
+
 protected:
 	virtual void BeginPlay() override;
 	
@@ -42,6 +48,11 @@ protected:
 	void TraceUnderCrosshairs(FHitResult& TraceHitResult);
 
 	void SetHUDCrosshairs(float DeltaTime);
+
+	UFUNCTION(Server, Reliable)
+	void Server_Reload();
+
+	void HandleReload();
 
 private:
 	
@@ -100,5 +111,11 @@ private:
 	UPROPERTY(EditAnywhere)
 	int32 StartingARAmmo = 30;
 	void InitializeCarriedAmmo();
+
+	UPROPERTY(ReplicatedUsing = OnRep_CombatState)
+	ECombatStates CombatState = ECombatStates::ECS_Unoccupied;
+
+	UFUNCTION()
+	void OnRep_CombatState();
 	
 };

@@ -10,6 +10,8 @@ void ASpecOpsGameMode::PlayerEliminated(APlayerCharacter* ElimCharacter, AGhostP
 	{
 		ElimCharacter->Die();
 	}
+
+	// OnPlayerEliminatedDelegate.Broadcast(ElimCharacter);
 }
 
 void ASpecOpsGameMode::RequestRespawn(ACharacter* EliminatedCharacter, AController* EliminatedController)

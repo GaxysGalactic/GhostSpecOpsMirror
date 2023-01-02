@@ -109,15 +109,44 @@ void UPlayerCombatComponent::FinishReload()
 	if(PlayerCharacter->HasAuthority())
 	{
 		CombatState = ECombatStates::ECS_Unoccupied;
+		UpdateAmmoValues();
 	}
+	if(bFireButtonPressed)
+	{
+		Fire();
+	}
+}
+
+void UPlayerCombatComponent::UpdateAmmoValues()
+{
+	if(!PlayerCharacter || !PlayerCharacter->GetWeapon())
+	{
+		return;
+	}
+	//update CarriedAmmo
+	const int32 ReloadAmount = AmountToReload();
+	if(CarriedAmmoMap.Contains(PlayerCharacter->GetWeapon()->GetWeaponType()))
+	{
+		CarriedAmmoMap[PlayerCharacter->GetWeapon()->GetWeaponType()] -= ReloadAmount;
+		CarriedAmmo = CarriedAmmoMap[PlayerCharacter->GetWeapon()->GetWeaponType()];
+	}
+	//update HUD
+	Controller = Controller == nullptr ? Cast<AGhostPlayerController>(PlayerCharacter->Controller) : Controller;
+	if(Controller)
+	{
+		Controller->SetHUDCarriedAmmo(CarriedAmmo);
+	}
+	//add ammo to the weapon
+	PlayerCharacter->GetWeapon()->AddAmmo(-ReloadAmount);
 }
 
 void UPlayerCombatComponent::Server_Reload_Implementation()
 {
-	if(PlayerCharacter == nullptr)
+	if(!PlayerCharacter || !PlayerCharacter->GetWeapon())
 	{
 		return;
 	}
+
 	CombatState = ECombatStates::ECS_Reloading;
 	HandleReload();
 }
@@ -128,13 +157,36 @@ void UPlayerCombatComponent::HandleReload()
 
 }
 
+int32 UPlayerCombatComponent::AmountToReload()
+{
+	if(!PlayerCharacter || !PlayerCharacter->GetWeapon())
+	{
+		return 0;
+	}
+	const AWeapon* EquippedWeapon = PlayerCharacter->GetWeapon();
+	const int32 RoomInMag = EquippedWeapon->GetMagCapacity() - EquippedWeapon->GetAmmo();
+	if(CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType()))
+	{
+		const int32 AmountCarried = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
+		const int32 Least = FMath::Min(RoomInMag, AmountCarried);
+		return FMath::Clamp(RoomInMag, 0 , Least);
+	}
+	return 0;
+}
+
 void UPlayerCombatComponent::OnRep_CombatState()
 {
 	switch (CombatState)
 	{
-	case ECombatStates::ECS_Reloading:
-		HandleReload();
-		break;
+		case ECombatStates::ECS_Reloading:
+			HandleReload();
+			break;
+		case ECombatStates::ECS_Unoccupied:
+			if (bFireButtonPressed)
+			{
+				Fire();
+			}
+			break;
 	}
 }
 
@@ -146,7 +198,7 @@ void UPlayerCombatComponent::ServerFire_Implementation(const FVector_NetQuantize
 void UPlayerCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& InTraceHitTarget)
 {
 	if (PlayerCharacter->GetWeapon() == nullptr) return;
-	if (PlayerCharacter)
+	if (PlayerCharacter && CombatState == ECombatStates::ECS_Unoccupied)
 	{
 		PlayerCharacter->PlayFireMontage(PlayerCharacter->bIsAiming);
 		PlayerCharacter->GetWeapon()->Fire(InTraceHitTarget);
@@ -172,6 +224,10 @@ void UPlayerCombatComponent::FinishFireTimer()
 	if(bFireButtonPressed && PlayerCharacter->GetWeapon()->bIsAutomatic)
 	{
 		Fire();
+	}
+	if(PlayerCharacter->GetWeapon()->IsEmpty())
+	{
+		Reload();
 	}
 }
 
@@ -313,7 +369,7 @@ bool UPlayerCombatComponent::CanFire()
 {
 	if(PlayerCharacter && PlayerCharacter->GetWeapon())
 	{
-		return !PlayerCharacter->GetWeapon()->IsEmpty() || !bCanFire;
+		return !PlayerCharacter->GetWeapon()->IsEmpty() && bCanFire && CombatState == ECombatStates::ECS_Unoccupied;
 	}
 	return false;
 }

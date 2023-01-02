@@ -80,5 +80,7 @@ void UBaseCharacterAinmInstance::NativeUpdateAnimation(float DeltaTime)
 	}
 
 	bUseFabrik = BaseCharacter->GetCombatSate() != ECombatStates::ECS_Reloading;
+	bUseAimOffsets = BaseCharacter->GetCombatSate() != ECombatStates::ECS_Reloading;
+	bTransformRightHand = BaseCharacter->GetCombatSate() != ECombatStates::ECS_Reloading;
 
 }

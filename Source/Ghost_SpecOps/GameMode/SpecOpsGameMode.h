@@ -11,6 +11,7 @@
 class APlayerCharacter;
 class AGhostPlayerController;
 
+// DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPlayerEliminatedSignature, APlayerCharacter*, EliminatedCharacter);
 
 UCLASS()
 class GHOST_SPECOPS_API ASpecOpsGameMode : public AGameMode
@@ -20,4 +21,6 @@ class GHOST_SPECOPS_API ASpecOpsGameMode : public AGameMode
 public:
 	virtual void PlayerEliminated(APlayerCharacter* ElimCharacter, AGhostPlayerController* VictimController, AGhostPlayerController* AttackerController);
 	virtual void RequestRespawn(ACharacter* EliminatedCharacter, AController* EliminatedController);
+
+	// FOnPlayerEliminatedSignature OnPlayerEliminatedDelegate;
 };

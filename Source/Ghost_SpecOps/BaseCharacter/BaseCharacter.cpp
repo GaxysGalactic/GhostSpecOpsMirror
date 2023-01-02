@@ -6,6 +6,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PawnMovementComponent.h"
 #include "Ghost_SpecOps/Components/PlayerCombatComponent.h"
+#include "Ghost_SpecOps/GameMode/SpecOpsGameMode.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundCue.h"
 #include "Net/UnrealNetwork.h"
@@ -114,7 +115,11 @@ void ABaseCharacter::PlayFireMontage(bool bAiming) const
 			SocketTransform
 			);
 		
-		UGameplayStatics::PlaySound2D(this, CurrentWeapon->GetFireSound());
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			CurrentWeapon->GetFireSound(),
+			GetActorLocation()
+			);
 		
 		AnimInstance->Montage_Play(FireWeaponMontage);
 		const FName SectionName = bAiming ? FName("RifleAim") : FName("RifleHip");
@@ -132,8 +137,6 @@ void ABaseCharacter::PlayReloadMontage() const
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if (AnimInstance && ReloadMontage)
 	{
-		UGameplayStatics::PlaySound2D(this, CurrentWeapon->GetFireSound());
-		
 		AnimInstance->Montage_Play(ReloadMontage);
 		FName SectionName;
 		switch (CurrentWeapon->GetWeaponType())

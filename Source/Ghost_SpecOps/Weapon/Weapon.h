@@ -86,6 +86,7 @@ public:
 	virtual void OnRep_Owner() override;
 	void SetHUDAmmo();
 	virtual void Fire(const FVector& InTarget);
+	void AddAmmo(int32 AmmoToAdd);
 	
 	// Weapon crosshair testures
 	UPROPERTY(EditAnywhere, Category = Crosshairs)
@@ -113,6 +114,8 @@ public:
 	FORCEINLINE float GetZoomedFOV() const {return  ZoomedFOV;}
 	FORCEINLINE float GetZoomInterpSpeed() const {return  ZoomedFOV;}
 	FORCEINLINE EWeaponTypes GetWeaponType() const {return WeaponType;}
+	FORCEINLINE int32 GetAmmo() const {return Ammo;}
+	FORCEINLINE int32 GetMagCapacity() const {return MagCapacity;}
 
 	bool IsEmpty();
 	

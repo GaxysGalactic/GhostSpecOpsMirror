@@ -102,7 +102,7 @@ float AEnemyCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Damage
 	AActor* DamageCauser)
 {
 	// Client side stuff and error handling 	
-	if(!HasAuthority() || !bIsAlive)
+	if(!HasAuthority())
 	{
 		return Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 	}
@@ -221,6 +221,12 @@ void AEnemyCharacter::ProcessVision(AActor* Actor, FAIStimulus Stimulus)
 
 void AEnemyCharacter::ProcessStimuli(AActor* Actor, FAIStimulus Stimulus)
 {
+	// Error handling
+	if(!bIsAlive)
+	{
+		return;
+	}
+	
 	// Handle Vision
 	if(Stimulus.Type == UAISense::GetSenseID<UAISense_Sight>())
 	{

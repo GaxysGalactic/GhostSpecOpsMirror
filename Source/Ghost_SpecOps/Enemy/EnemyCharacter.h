@@ -143,6 +143,8 @@ public:
 
 	UEnemyCombatComponent* GetEnemyCombatComponent() const { return EnemyCombatComponent; }
 
+	UStateTreeComponent* GetStateTreeComponent() const { return StateTreeComponent; }
+
 	virtual void PlayFireMontage(bool bInAiming) const override;
 	
 };

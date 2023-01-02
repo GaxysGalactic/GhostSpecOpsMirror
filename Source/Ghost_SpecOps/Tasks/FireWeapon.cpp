@@ -4,6 +4,7 @@
 #include "FireWeapon.h"
 
 #include "StateTreeExecutionContext.h"
+#include "Components/StateTreeComponent.h"
 #include "Ghost_SpecOps/Components/EnemyCombatComponent.h"
 #include "Ghost_SpecOps/Enemy/EnemyCharacter.h"
 
@@ -21,11 +22,19 @@ EStateTreeRunStatus UFireWeapon::EnterState(FStateTreeExecutionContext& Context,
 EStateTreeRunStatus UFireWeapon::Tick(FStateTreeExecutionContext& Context, const float DeltaTime)
 {
 	AEnemyCharacter* EnemyCharacter = Cast<AEnemyCharacter>(Actor);
+
+	// Debug
+	if(!EnemyCharacter->bIsAlive)
+	{
+		const FGameplayTag DeathTag = DeathTag.RequestGameplayTag("Dead");
+
+		EnemyCharacter->GetStateTreeComponent()->SendStateTreeEvent(FStateTreeEvent(DeathTag));
+	}
+	
 	if(EnemyCharacter && EnemyCharacter->HasAggro())
 	{
 		EnemyCharacter->GetEnemyCombatComponent()->OrderToFire(bIsFiring);
 	}
-	
 	return Super::Tick(Context, DeltaTime);
 }
 
@@ -33,7 +42,8 @@ void UFireWeapon::ExitState(FStateTreeExecutionContext& Context, const FStateTre
 {
 	AEnemyCharacter* EnemyCharacter = Cast<AEnemyCharacter>(Actor);
 	if(Context.GetStateFromHandle(Transition.TargetState)->Name == "Death" ||
-		Context.GetStateFromHandle(Transition.TargetState)->Name == "Retreat" )
+		Context.GetStateFromHandle(Transition.TargetState)->Name == "Retreat" ||
+		Context.GetStateFromHandle(Transition.TargetState)->Name == "Investigate")
 	{
 		EnemyCharacter->GetWorldTimerManager().ClearTimer(FireTimer);
 		EnemyCharacter->GetEnemyCombatComponent()->OrderToFire(false);

@@ -29,6 +29,11 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return CameraComponent; }
 
+	void Die();
+	
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_Die();
+
 	UAIPerceptionStimuliSourceComponent* AIPerception;
 
 private:
@@ -48,6 +53,14 @@ protected:
 
 	FRotator StartingAimRotation;
 
+	UFUNCTION()
+	void ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, class AController* InstigatorController, AActor* DamageCauser);
+
+	virtual void OnRep_Health() override;
+
+	UFUNCTION()
+	void UpdateHUDHealth();
+
 	//------------------------------------------- Movement ------------------------------------------------------------
 	
 	void MoveForward(float InAxisValue);
@@ -65,6 +78,8 @@ protected:
 	void OnFireButtonReleased();
 
 	void CalculateAimOffset(float DeltaTime);
+
+	void OnReloadButtonPressed();
 
 	//---------------------------------------- Crouch & Prone ---------------------------------------------------------
 

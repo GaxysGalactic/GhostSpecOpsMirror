@@ -5,59 +5,56 @@
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "Interfaces/OnlineSessionInterface.h"
+#include "UObject/Object.h"
 #include "MenuWidget.generated.h"
 
 class UMultiplayerSessionsSubsystem;
 class UButton;
-/**
- * 
- */
+
 UCLASS()
 class MULTIPLAYERSESSIONS_API UMenuWidget : public UUserWidget
 {
 	GENERATED_BODY()
 
 private:
-	UPROPERTY(BlueprintReadOnly, meta = (BindWidget, AllowPrivateAccess))
-	TObjectPtr<UButton> HostButton;
+	UPROPERTY(meta = (BindWidget))
+	UButton* HostButton;
 
-	UPROPERTY(BlueprintReadOnly, meta = (BindWidget, AllowPrivateAccess))
-	TObjectPtr<UButton> JoinButton;
+	UPROPERTY(meta = (BindWidget))
+	UButton* JoinButton;
 
 private:
-	TWeakObjectPtr<UMultiplayerSessionsSubsystem> MultiplayerSessionsSubsystemPtr;
+	UPROPERTY(Transient)
+	UMultiplayerSessionsSubsystem* MultiplayerSessionsSubsystem;
 
-	int32 MaxPublicConnections;
+private:
+	int32 MaxSessionSearches;
 	FString MatchType;
 	FString PathToLobby;
 
-public:
-	UMenuWidget(const FObjectInitializer& ObjectInitializer);
-
-public:
-	UFUNCTION(BlueprintCallable, meta = (AutoCreateRefTerm="InMatchType"))
-	void SetUpMenu(UPARAM(DisplayName="Max Public Connections") int32 InMaxPublicConnections = 4,
-	               UPARAM(DisplayName="Match Type") const FString& InMatchType = TEXT("FreeForAll"),
-	               UPARAM(DisplayName="Path to Lobby") const FString& InPathToLobby = TEXT("/Game/ThirdPerson/Maps/Lobby"));
-
 protected:
-	virtual bool Initialize() override;
+	virtual void NativeConstruct() override;
 	virtual void NativeDestruct() override;
 
+protected:
 	UFUNCTION()
-	void OnCreateSessionComplete(bool bWasSuccessful);
-	UFUNCTION()
-	void OnDestroySessionComplete(bool bWasSuccessful);
-	UFUNCTION()
-	void OnStartSessionComplete(bool bWasSuccessful);
+	virtual void OnMultiplayerSessionCreated(const FName SessionName, const bool bWasSuccessful);
 
-	void OnFindSessionsComplete(bool bWasSuccessful, const TArray<FOnlineSessionSearchResult>& SessionResults);
-	void OnJoinSessionComplete(EOnJoinSessionCompleteResult::Type Result);
+	virtual void OnMultiplayerSessionsFound(const TArray<FOnlineSessionSearchResult>& SearchResults, const bool bWasSuccessful);
+	virtual void OnMultiplayerSessionJoined(const EOnJoinSessionCompleteResult::Type Result);
+
+	UFUNCTION()
+	virtual void OnMultiplayerSessionDestroyed(const bool bWasSuccessful);
+
+	UFUNCTION()
+	virtual void OnMultiplayerSessionStarted(const FName SessionName, const bool bWasSuccessful);
+	
+public:
+	UFUNCTION(BlueprintCallable, meta = (AutoCreateRefTerm="NewMatchType,PathToLobby"))
+	void SetupMenu(const int32 NewMaxSearchSessions = 10000, const FString& NewMatchType = TEXT("DefaultMatchType"), const FString& NewPathToLobby = TEXT("/Game/ThirdPerson/Maps/Lobby"));
 
 private:
 	void TearDownMenu();
-
-	void SetButtonsEnabled(bool bShouldEnable);
 
 private:
 	UFUNCTION()
@@ -65,4 +62,7 @@ private:
 
 	UFUNCTION()
 	void OnJoinButtonClicked();
+
+	void EnableButtons();
+	void DisableButtons();
 };

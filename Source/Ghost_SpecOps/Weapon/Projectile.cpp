@@ -50,6 +50,7 @@ void AProjectile::BeginPlay()
 
 void AProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* HitActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& InHit)
 {
+	
 	if(HitActor && GetOwner())
 	{
 		NormalImpulse.Normalize();

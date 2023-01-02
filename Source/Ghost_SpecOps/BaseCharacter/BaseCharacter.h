@@ -2,6 +2,7 @@
 #include "CoreMinimal.h"
 #include "Ghost_SpecOps/Weapon/Weapon.h"
 #include "GameFramework/Character.h"
+#include "Ghost_SpecOps/Types/CombatStates.h"
 #include "Ghost_SpecOps/Types/TurningInPlace.h"
 #include "BaseCharacter.generated.h"
 
@@ -18,8 +19,9 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void PostInitializeComponents() override;
-	
 	virtual void PlayFireMontage(bool bInAiming) const;
+	void PlayReloadMontage() const;
+
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = DEFAULTS, Replicated)
 	bool bIsProne;
@@ -41,7 +43,6 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
-
 	//---------------------------------- Character Weapon settings ---------------------------------------------
 	UPROPERTY(EditDefaultsOnly, Category = Combat)
 	TSubclassOf<AWeapon> StartingWeaponClass;
@@ -52,7 +53,7 @@ protected:
 	UPROPERTY(BlueprintReadOnly)
 	AWeapon* CurrentWeapon;
 	
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	UPlayerCombatComponent* CombatComponent;
 
 	//---------------------------------------------------------------------------------------------------------
@@ -64,7 +65,7 @@ protected:
 	float Health = 100.f;
 
 	UFUNCTION()
-	void OnRep_Health();
+	virtual void OnRep_Health();
 	
 	float Speed;
 	
@@ -87,13 +88,17 @@ protected:
 	UPROPERTY(EditAnywhere, Category = Combat)
 	UAnimMontage* FireWeaponMontage;
 
+	UPROPERTY(EditAnywhere, Category = Combat)
+	UAnimMontage* ReloadMontage;
+
 public:
 	FORCEINLINE UPlayerCombatComponent* GetCombatComponent() const { return CombatComponent; }
 	FORCEINLINE AWeapon* GetWeapon() const { return CurrentWeapon; }
 	FORCEINLINE float GetAO_Yaw() const { return AO_Yaw; }
 	FORCEINLINE float GetAO_Pitch() const { return AO_Pitch; }
 	FORCEINLINE ETurningInPlace GetTurningInPlace() const { return TurningInPlace;}
-	FVector GetHitTarget() const; 
+	FVector GetHitTarget() const;
+	ECombatStates GetCombatSate() const;
 
 	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, WithValidation, Category = Animation)
 	void MulticastPlayAnimMontage(class UAnimMontage* Montage);

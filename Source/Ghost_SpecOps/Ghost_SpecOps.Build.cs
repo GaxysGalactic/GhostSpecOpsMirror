@@ -8,7 +8,7 @@ public class Ghost_SpecOps : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "NavigationSystem", "SmartObjectsModule", "GameplayTags", "GameplayBehaviorsModule", "UMG" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "NavigationSystem", "SmartObjectsModule", "GameplayTags", "GameplayBehaviorsModule", "UMG", "MultiplayerSessions" });
 
 		PrivateDependencyModuleNames.AddRange(new string[] { "AnimGraphRuntime", "GameplayStateTreeModule" });
 

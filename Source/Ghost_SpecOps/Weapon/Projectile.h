@@ -8,6 +8,7 @@ class UBoxComponent;
 class UProjectileMovementComponent;
 class UParticleSystem;
 class UParticleSystemComponent;
+class USoundCue;
 
 UCLASS()
 class GHOST_SPECOPS_API AProjectile : public AActor
@@ -25,6 +26,9 @@ protected:
 	UFUNCTION()
 	virtual void OnHit(UPrimitiveComponent* HitComponent, AActor* HitActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& InHit);
 
+	UPROPERTY(EditAnywhere)
+	float Damage = 20.f;
+
 private:
 
 	UPROPERTY(EditAnywhere)
@@ -37,4 +41,11 @@ private:
 	UParticleSystem* Tracer;
 
 	UParticleSystemComponent* TracerComponent;
+
+	UPROPERTY(EditAnywhere)
+	UParticleSystem* ImpactParticles;
+	
+	UPROPERTY(EditAnywhere)
+	USoundCue* ImpactSound;
+	
 };

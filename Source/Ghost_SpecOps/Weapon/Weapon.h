@@ -2,6 +2,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Ghost_SpecOps/Player/GhostPlayerController.h"
+#include "Ghost_SpecOps/Types/WeaponTypes.h"
 #include "Weapon.generated.h"
 
 class UStaticMeshComponent;
@@ -10,6 +12,8 @@ class UAnimationAsset;
 class UTexture2D;
 class USoundCue;
 class UParticleSystem;
+class APlayerCharacter;
+class AGhostPlayerController;
 
 UCLASS()
 class GHOST_SPECOPS_API AWeapon : public AActor
@@ -27,6 +31,26 @@ private:
 	
 	UPROPERTY(EditAnywhere)
 	float ZoomInterpSpeed = 20.f;
+
+	UPROPERTY(EditAnywhere, ReplicatedUsing = OnRep_Ammo)
+	int32 Ammo;
+
+	UFUNCTION()
+	void OnRep_Ammo();
+
+	void SpendAmmo();
+	
+	UPROPERTY(EditAnywhere)
+	int32 MagCapacity;
+
+	UPROPERTY()
+	APlayerCharacter* PlayerCharacter;
+
+	UPROPERTY()
+	AGhostPlayerController* PlayerController;
+
+	UPROPERTY(EditAnywhere)
+	EWeaponTypes WeaponType;
 
 protected:
 
@@ -58,7 +82,11 @@ protected:
 
 public:	
 	AWeapon();
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual void OnRep_Owner() override;
+	void SetHUDAmmo();
 	virtual void Fire(const FVector& InTarget);
+	void AddAmmo(int32 AmmoToAdd);
 	
 	// Weapon crosshair testures
 	UPROPERTY(EditAnywhere, Category = Crosshairs)
@@ -80,10 +108,15 @@ public:
 	bool bIsAutomatic = true;
 
 	UFUNCTION(BlueprintCallable)
-	FORCEINLINE UStaticMeshComponent* GetWeaponMesh() const { return WeaponMesh; }
-	FORCEINLINE USoundCue* GetFireSound() const { return FireSound; }
-	FORCEINLINE UParticleSystem* GetMuzzleFlash() const { return MuzzleFlash; }
-	FORCEINLINE float GetZoomedFOV() const { return  ZoomedFOV; }
-	FORCEINLINE float GetZoomInterpSpeed() const { return  ZoomedFOV; }
+	FORCEINLINE UStaticMeshComponent* GetWeaponMesh() const {return WeaponMesh;}
+	FORCEINLINE USoundCue* GetFireSound() const {return FireSound;}
+	FORCEINLINE UParticleSystem* GetMuzzleFlash() const {return MuzzleFlash;}
+	FORCEINLINE float GetZoomedFOV() const {return  ZoomedFOV;}
+	FORCEINLINE float GetZoomInterpSpeed() const {return  ZoomedFOV;}
+	FORCEINLINE EWeaponTypes GetWeaponType() const {return WeaponType;}
+	FORCEINLINE int32 GetAmmo() const {return Ammo;}
+	FORCEINLINE int32 GetMagCapacity() const {return MagCapacity;}
 
+	bool IsEmpty();
+	
 };

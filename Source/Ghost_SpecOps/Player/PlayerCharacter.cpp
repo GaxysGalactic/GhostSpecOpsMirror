@@ -3,6 +3,7 @@
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Ghost_SpecOps/Components/PlayerCombatComponent.h"
+#include "Ghost_SpecOps/GameMode/SpecOpsGameMode.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
@@ -35,10 +36,11 @@ void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	PlayerController = Cast<AGhostPlayerController>(Controller);
-	if(PlayerController)
+	UpdateHUDHealth();
+
+	if(HasAuthority())
 	{
-		PlayerController->SetHUDHealt(Health, MaxHealth);
+		OnTakeAnyDamage.AddDynamic(this, &APlayerCharacter::ReceiveDamage);
 	}
 	
 	AIPerception->RegisterForSense(TSubclassOf<UAISense_Sight>());
@@ -61,6 +63,9 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &APlayerCharacter::OnFireButtonPressed);
 	PlayerInputComponent->BindAction("Fire", IE_Released, this, &APlayerCharacter::OnFireButtonReleased);
 
+	PlayerInputComponent->BindAction("Reload", IE_Pressed, this, &APlayerCharacter::OnReloadButtonPressed);
+
+	
 	PlayerInputComponent->BindAction("Aim", IE_Pressed, this, &APlayerCharacter::OnAimButtonPressed);
 	PlayerInputComponent->BindAction("Aim", IE_Released, this, &APlayerCharacter::OnAimButtonReleased);
 
@@ -76,9 +81,13 @@ void APlayerCharacter::Tick(float DeltaSeconds)
 	Super::Tick(DeltaSeconds);
 	CalculateAimOffset(DeltaSeconds);
 
+	// if (GEngine)
+	// {
+	// 	//Print debug message
+	// 	GEngine->AddOnScreenDebugMessage(1, 1.f, FColor::Yellow, FString::Printf(TEXT("Mesh: %f"), GetMesh()->GetRelativeLocation().Z));
+	// }
+
 }
-
-
 
 void APlayerCharacter::PostInitializeComponents()
 {
@@ -88,6 +97,68 @@ void APlayerCharacter::PostInitializeComponents()
 		CombatComponent->PlayerCharacter = this;
 	}
 	
+	
+}
+
+void APlayerCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType*, AController* InstigatorController, AActor* DamageCauser)
+{
+	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
+	UpdateHUDHealth();
+	//PlayeHitReactMontage();
+
+	if(Health <= 0.f)
+	{
+		ASpecOpsGameMode* SpecOpsGameMode = GetWorld()->GetAuthGameMode<ASpecOpsGameMode>();
+
+		if(SpecOpsGameMode)
+		{
+			PlayerController = PlayerController == nullptr ? Cast<AGhostPlayerController>(Controller) : PlayerController;
+			AGhostPlayerController* AttackerController = Cast<AGhostPlayerController>(InstigatorController);
+			SpecOpsGameMode->PlayerEliminated(this, PlayerController, AttackerController);
+		}
+	}
+}
+
+void APlayerCharacter::OnRep_Health()
+{
+	Super::OnRep_Health();// no hace nada :v
+
+	UpdateHUDHealth();
+
+	//PlayeHitReactMontage();
+}
+
+void APlayerCharacter::UpdateHUDHealth()
+{
+	PlayerController = PlayerController == nullptr ? Cast<AGhostPlayerController>(Controller) : PlayerController;
+	if(PlayerController)
+	{
+		PlayerController->SetHUDHealth(Health, MaxHealth);
+	}
+}
+
+//--------------------------------------------- Die -----------------------------------------------------------------
+
+void APlayerCharacter::Die()
+{
+	Multicast_Die();
+}
+
+void APlayerCharacter::Multicast_Die_Implementation()
+{
+	bIsAlive = false;
+
+	//Disable character movement
+	GetCharacterMovement()->DisableMovement();
+	GetCharacterMovement()->StopMovementImmediately();
+	if(PlayerController)
+	{
+		DisableInput(PlayerController);
+	}
+
+	//Disable Collision
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 //------------------------------------------- Movement ------------------------------------------------------------
@@ -216,6 +287,14 @@ void APlayerCharacter::CalculateAimOffset(float DeltaTime)
 	}
 }
 
+void APlayerCharacter::OnReloadButtonPressed()
+{
+	if(CombatComponent)
+	{
+		CombatComponent->Reload();
+	}
+}
+
 //---------------------------------------- Crouch & Prone ---------------------------------------------------------
 
 void APlayerCharacter::OnCrouchButtonPressed()
@@ -260,16 +339,11 @@ void APlayerCharacter::Prone()
 	FTimerHandle Handle;
 	GetWorld()->GetTimerManager().SetTimer(Handle, TimerCallback, 1.3f, false);
 
-	float MeshStartZ = -88.f;
-	const float MeshEndZ = -37.f;
-	
-	
+	// float MeshStartZ = -88.f;
+	// const float MeshEndZ = -37.f;
 	// float MeshInterpLocationZ = FMath::FInterpTo(CurrentMeshZ, MeshEndZ, )
 	
-	
-	
-	// GetMesh()->SetRelativeLocation(FVector(0.f, 0.f, MeshEndZ));
-
+	GetMesh()->SetRelativeLocation(FVector(0.f, 0.f, -37.f));
 	GetCapsuleComponent()->SetCapsuleSize(30.f, 30.f);
 
 	float CurrentMeshZ = GetMesh()->GetRelativeLocation().Z;
@@ -293,7 +367,7 @@ void APlayerCharacter::StandUp()
 	FTimerHandle Handle;
 	GetWorld()->GetTimerManager().SetTimer(Handle, TimerCallback, 1.3f, false);
 
-	// GetMesh()->SetRelativeLocation(FVector(0.f, 0.f, -88.f));
+	GetMesh()->SetRelativeLocation(FVector(0.f, 0.f, -88.f));
 	GetCapsuleComponent()->SetCapsuleSize(34.f, 88.f);
 
 	float CurrentMeshZ = GetMesh()->GetRelativeLocation().Z;

@@ -1,10 +1,12 @@
 #include "BaseCharacter.h"
 
+#include "../../../Plugins/Developer/RiderLink/Source/RD/thirdparty/clsocket/src/ActiveSocket.h"
 #include "Components/CapsuleComponent.h"
 #include "Engine/StaticMeshSocket.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PawnMovementComponent.h"
 #include "Ghost_SpecOps/Components/PlayerCombatComponent.h"
+#include "Ghost_SpecOps/GameMode/SpecOpsGameMode.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundCue.h"
 #include "Net/UnrealNetwork.h"
@@ -57,6 +59,7 @@ void ABaseCharacter::BeginPlay()
 		if(IsValid(CurrentWeapon))
 		{
 			CurrentWeapon->SetOwner(this);
+			CurrentWeapon->SetHUDAmmo();
 			CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, WeaponSocketName);
 		}
 	}
@@ -74,6 +77,15 @@ FVector ABaseCharacter::GetHitTarget() const
 		return CombatComponent->HitTarget;
 	}
 	return FVector();
+}
+
+ECombatStates ABaseCharacter::GetCombatSate() const
+{
+	if(CombatComponent)
+	{
+		return CombatComponent->CombatState;
+	}
+	return ECombatStates::ECS_MAX;
 }
 
 void ABaseCharacter::Tick(float DeltaTime)
@@ -103,10 +115,38 @@ void ABaseCharacter::PlayFireMontage(bool bAiming) const
 			SocketTransform
 			);
 		
-		UGameplayStatics::PlaySound2D(this, CurrentWeapon->GetFireSound());
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			CurrentWeapon->GetFireSound(),
+			GetActorLocation()
+			);
 		
 		AnimInstance->Montage_Play(FireWeaponMontage);
 		const FName SectionName = bAiming ? FName("RifleAim") : FName("RifleHip");
+		AnimInstance->Montage_JumpToSection(SectionName);
+	}
+}
+
+void ABaseCharacter::PlayReloadMontage() const
+{
+	if (!CombatComponent || !CurrentWeapon || !CurrentWeapon->GetWeaponMesh())
+	{
+		return;
+	}
+
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && ReloadMontage)
+	{
+		AnimInstance->Montage_Play(ReloadMontage);
+		FName SectionName;
+		switch (CurrentWeapon->GetWeaponType())
+		{
+			case EWeaponTypes::EWT_AssaultRifle:
+				SectionName = FName("Rifle");
+				break;
+			
+			default: ;
+		}
 		AnimInstance->Montage_JumpToSection(SectionName);
 	}
 }

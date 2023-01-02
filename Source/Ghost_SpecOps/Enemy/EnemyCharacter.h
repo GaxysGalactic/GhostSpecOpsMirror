@@ -27,6 +27,8 @@ private:
 
 	virtual void Tick(float DeltaSeconds) override;
 
+	virtual void PostInitializeComponents() override;
+
 	/** Starts the State Tree Logic */
 	void StartStateTree() const;
 
@@ -112,6 +114,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	class UWidgetComponent* WidgetComponent;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	class UEnemyCombatComponent* EnemyCombatComponent;
+
 public:
 
 	/** Is the enemy dead? */
@@ -131,5 +136,15 @@ public:
 
 	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, WithValidation, Category = Animation)
 	void MulticastChaseBark();
+
+	AActor* GetFirstInAggro() const;
+
+	bool HasAggro() const { return !AggroList.IsEmpty(); }
+
+	UEnemyCombatComponent* GetEnemyCombatComponent() const { return EnemyCombatComponent; }
+
+	UStateTreeComponent* GetStateTreeComponent() const { return StateTreeComponent; }
+
+	virtual void PlayFireMontage(bool bInAiming) const override;
 	
 };

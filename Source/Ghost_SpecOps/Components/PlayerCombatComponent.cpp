@@ -5,6 +5,7 @@
 #include "Ghost_SpecOps/HUD/PlayerHUD.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
+#include "Perception/AISense_Hearing.h"
 
 
 UPlayerCombatComponent::UPlayerCombatComponent()
@@ -202,6 +203,8 @@ void UPlayerCombatComponent::MulticastFire_Implementation(const FVector_NetQuant
 	{
 		PlayerCharacter->PlayFireMontage(PlayerCharacter->bIsAiming);
 		PlayerCharacter->GetWeapon()->Fire(InTraceHitTarget);
+
+		UAISense_Hearing::ReportNoiseEvent(this, GetOwner()->GetActorLocation(), 1.f, GetOwner(), 1000.f);
 	}
 }
 

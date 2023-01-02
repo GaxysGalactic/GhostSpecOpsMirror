@@ -8,7 +8,10 @@
 #include "Components/SplineComponent.h"
 #include "Components/StateTreeComponent.h"
 #include "Components/WidgetComponent.h"
+#include "Engine/DamageEvents.h"
+#include "Engine/StaticMeshSocket.h"
 #include "Ghost_SpecOps/Civilian/CivilianCharacter.h"
+#include "Ghost_SpecOps/Components/EnemyCombatComponent.h"
 #include "Ghost_SpecOps/Player/PlayerCharacter.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
@@ -35,8 +38,14 @@ AEnemyCharacter::AEnemyCharacter() :
 	WidgetComponent->SetupAttachment(RootComponent);
 	WidgetComponent->SetVisibility(false);
 
+	EnemyCombatComponent = CreateDefaultSubobject<UEnemyCombatComponent>(TEXT("CombatComponent"));
+	EnemyCombatComponent->SetIsReplicated(true);
+
 	// Delegate Binding
 	PerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this, &AEnemyCharacter::ProcessStimuli);
+
+	// Actor Tags
+	Tags.Add("Keycard");
 }
 
 void AEnemyCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -75,6 +84,15 @@ void AEnemyCharacter::Tick(float DeltaSeconds)
 	Super::Tick(DeltaSeconds);
 }
 
+void AEnemyCharacter::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+	if(EnemyCombatComponent)
+	{
+		EnemyCombatComponent->EnemyCharacter = this;
+	}
+}
+
 void AEnemyCharacter::StartStateTree() const
 {
 	StateTreeComponent->StartLogic();
@@ -83,12 +101,24 @@ void AEnemyCharacter::StartStateTree() const
 float AEnemyCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator,
 	AActor* DamageCauser)
 {
+	// Client side stuff and error handling 	
+	if(!HasAuthority())
+	{
+		return Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+	}
+	
 	Health -= DamageAmount;
 
 	// Rotate to face
 	if(AggroList.IsEmpty())
 	{
-		//TODO: Rotate to face after ApplyPointDamage
+		if (DamageEvent.IsOfType(FPointDamageEvent::ClassID))
+		{
+			const FPointDamageEvent* const PointDamageEvent = (FPointDamageEvent*) (&DamageEvent);
+			const FRotator Rotator = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), PointDamageEvent->ShotDirection);
+			Controller->SetControlRotation(Rotator);
+		}
+		
 	}
 	
 	// Death
@@ -191,6 +221,12 @@ void AEnemyCharacter::ProcessVision(AActor* Actor, FAIStimulus Stimulus)
 
 void AEnemyCharacter::ProcessStimuli(AActor* Actor, FAIStimulus Stimulus)
 {
+	// Error handling
+	if(!bIsAlive)
+	{
+		return;
+	}
+	
 	// Handle Vision
 	if(Stimulus.Type == UAISense::GetSenseID<UAISense_Sight>())
 	{
@@ -229,6 +265,31 @@ void AEnemyCharacter::Chase()
 void AEnemyCharacter::HideWidget() const
 {
 	WidgetComponent->SetVisibility(false);
+}
+
+void AEnemyCharacter::PlayFireMontage(bool bAiming) const
+{
+	if (!EnemyCombatComponent || !CurrentWeapon || !CurrentWeapon->GetWeaponMesh()) return;
+
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	FTransform SocketTransform{};
+
+	const UStaticMeshSocket* BarrelSocket = CurrentWeapon->GetWeaponMesh()->GetSocketByName(FName("MuzzleFlash"));
+	if (AnimInstance && FireWeaponMontage && CurrentWeapon->GetFireSound() && CurrentWeapon->GetMuzzleFlash() && BarrelSocket)
+	{
+		BarrelSocket->GetSocketTransform(SocketTransform, CurrentWeapon->GetWeaponMesh());
+		UGameplayStatics::SpawnEmitterAtLocation(
+			GetWorld(),
+			CurrentWeapon->GetMuzzleFlash(),
+			SocketTransform
+			);
+		
+		UGameplayStatics::PlaySoundAtLocation(this, CurrentWeapon->GetFireSound(), GetActorLocation(), GetActorRotation(), 0.5f);
+		
+		AnimInstance->Montage_Play(FireWeaponMontage);
+		const FName SectionName = bAiming ? FName("RifleAim") : FName("RifleHip");
+		AnimInstance->Montage_JumpToSection(SectionName);
+	}
 }
 
 void AEnemyCharacter::UpdatePatrolIndex()
@@ -285,6 +346,15 @@ void AEnemyCharacter::UpdatePatrolIndex()
 	}
 }
 
+AActor* AEnemyCharacter::GetFirstInAggro() const
+{
+	if(!AggroList.IsEmpty())
+	{
+		return AggroList[0];
+	}
+	return nullptr;
+}
+
 void AEnemyCharacter::MulticastChaseBark_Implementation()
 {
 	UGameplayStatics::PlaySoundAtLocation(this, AlertSound, GetActorLocation(), GetActorRotation());
@@ -292,8 +362,6 @@ void AEnemyCharacter::MulticastChaseBark_Implementation()
 
 	FTimerHandle TurnOffWidgetHandle;
 	GetWorldTimerManager().SetTimer(TurnOffWidgetHandle, this, &AEnemyCharacter::HideWidget, 2.f, false);
-
-	UE_LOG(LogTemp, Warning, TEXT("bark!"));
 }
 
 bool AEnemyCharacter::MulticastChaseBark_Validate()

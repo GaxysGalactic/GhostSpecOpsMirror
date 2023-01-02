@@ -4,6 +4,7 @@
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Ghost_SpecOps/Player/PlayerCharacter.h"
 #include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetMathLibrary.h"
 
 AProjectile::AProjectile()
 {
@@ -52,7 +53,8 @@ void AProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* HitActor, UPr
 	
 	if(HitActor && GetOwner())
 	{
-		UGameplayStatics::ApplyPointDamage(HitActor, 10.f, NormalImpulse, InHit, GetOwner()->GetInstigatorController(), this, TSubclassOf<UDamageType>());
+		NormalImpulse.Normalize();
+		UGameplayStatics::ApplyPointDamage(HitActor, 10.f, -NormalImpulse, InHit, GetOwner()->GetInstigatorController(), this, TSubclassOf<UDamageType>());
 	}
 	Destroy();
 }

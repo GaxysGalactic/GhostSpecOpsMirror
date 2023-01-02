@@ -94,6 +94,7 @@ void APlayerCharacter::PostInitializeComponents()
 		CombatComponent->PlayerCharacter = this;
 	}
 	
+	
 }
 
 void APlayerCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType*, AController* InstigatorController, AActor* DamageCauser)

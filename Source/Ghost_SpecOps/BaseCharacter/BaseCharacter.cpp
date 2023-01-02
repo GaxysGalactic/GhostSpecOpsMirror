@@ -57,6 +57,7 @@ void ABaseCharacter::BeginPlay()
 		if(IsValid(CurrentWeapon))
 		{
 			CurrentWeapon->SetOwner(this);
+			CurrentWeapon->SetHUDAmmo();
 			CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, WeaponSocketName);
 		}
 	}

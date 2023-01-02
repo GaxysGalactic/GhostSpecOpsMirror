@@ -4,6 +4,7 @@
 #include "Components/ActorComponent.h"
 #include "Ghost_SpecOps/Player/GhostPlayerController.h"
 #include "Ghost_SpecOps/Player/PlayerCharacter.h"
+#include "Ghost_SpecOps/Types/WeaponTypes.h"
 #include "PlayerCombatComponent.generated.h"
 
 #define TRACE_LENGTH 80000.f
@@ -24,7 +25,6 @@ public:
 
 	friend class APlayerCharacter;
 	friend class ABaseCharacter;
-
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
@@ -58,8 +58,6 @@ private:
 
 	FVector HitTarget;
 
-private:
-
 	void Fire();
 
 	/*
@@ -89,4 +87,18 @@ private:
 	void StartFireTimer();
 	void FinishFireTimer();
 
+	bool CanFire();
+
+	//CarriedAmmo for the current equipped weapon
+	UPROPERTY(ReplicatedUsing = OnRep_CarriedAmmo)
+	int32 CarriedAmmo;
+
+	UFUNCTION()
+	void OnRep_CarriedAmmo();
+
+	TMap<EWeaponTypes, int32> CarriedAmmoMap;
+	UPROPERTY(EditAnywhere)
+	int32 StartingARAmmo = 30;
+	void InitializeCarriedAmmo();
+	
 };

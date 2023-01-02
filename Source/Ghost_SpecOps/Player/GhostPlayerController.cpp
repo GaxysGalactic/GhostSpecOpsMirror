@@ -28,4 +28,32 @@ void AGhostPlayerController::SetHUDHealth(float InHealth, float MaxHealth)
 	}
 }
 
+void AGhostPlayerController::SetHUDWeaponAmmo(int32 InAmmo)
+{
+	PlayerHUD = PlayerHUD == nullptr ? Cast<APlayerHUD>(GetHUD()) : PlayerHUD;
+
+	bool bIsHUDValid = PlayerHUD &&
+		PlayerHUD->CharacterOverlay &&
+		PlayerHUD->CharacterOverlay->WeaponAmmoAmount;
+	if(bIsHUDValid)
+	{
+		FString AmmoText = FString::Printf(TEXT("%d"), InAmmo);
+		PlayerHUD->CharacterOverlay->WeaponAmmoAmount->SetText(FText::FromString(AmmoText));
+	}
+}
+
+void AGhostPlayerController::SetHUDCarriedAmmo(int32 InAmmo)
+{
+	PlayerHUD = PlayerHUD == nullptr ? Cast<APlayerHUD>(GetHUD()) : PlayerHUD;
+
+	bool bIsHUDValid = PlayerHUD &&
+		PlayerHUD->CharacterOverlay &&
+		PlayerHUD->CharacterOverlay->CarriedAmmoAmount;
+	if(bIsHUDValid)
+	{
+		FString AmmoText = FString::Printf(TEXT("%d"), InAmmo);
+		PlayerHUD->CharacterOverlay->CarriedAmmoAmount->SetText(FText::FromString(AmmoText));
+	}
+}
+
 

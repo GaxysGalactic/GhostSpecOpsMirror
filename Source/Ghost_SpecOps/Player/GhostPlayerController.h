@@ -15,6 +15,8 @@ class GHOST_SPECOPS_API AGhostPlayerController : public APlayerController
 public:
 
 	void SetHUDHealth(float InHealth, float MaxHealth);
+	void SetHUDWeaponAmmo(int32 InAmmo);
+	void SetHUDCarriedAmmo(int32 InAmmo);
 
 protected:
 	virtual void BeginPlay() override;

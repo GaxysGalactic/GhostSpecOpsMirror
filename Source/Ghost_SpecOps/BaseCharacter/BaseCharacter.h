@@ -20,8 +20,6 @@ public:
 	virtual void PostInitializeComponents() override;
 	void PlayFireMontage(bool bInAiming) const;
 
-	
-
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = DEFAULTS, Replicated)
 	bool bIsProne;
 	

@@ -4,6 +4,7 @@
 #include "Ghost_SpecOps/BaseCharacter/BaseCharacter.h"
 #include "Ghost_SpecOps/HUD/PlayerHUD.h"
 #include "Kismet/GameplayStatics.h"
+#include "Net/UnrealNetwork.h"
 
 
 UPlayerCombatComponent::UPlayerCombatComponent()
@@ -14,17 +15,43 @@ UPlayerCombatComponent::UPlayerCombatComponent()
 void UPlayerCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME_CONDITION(UPlayerCombatComponent, CarriedAmmo, COND_OwnerOnly);
 }
 
 void UPlayerCombatComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if(PlayerCharacter->GetFollowCamera())
+	if(PlayerCharacter)
 	{
-		DefaulfFOV = PlayerCharacter->GetFollowCamera()->FieldOfView;
-		CurrentFOV = DefaulfFOV;
+		if(PlayerCharacter->GetFollowCamera())
+		{
+			DefaulfFOV = PlayerCharacter->GetFollowCamera()->FieldOfView;
+			CurrentFOV = DefaulfFOV;
+		}
+		if (PlayerCharacter->HasAuthority())
+		{
+			InitializeCarriedAmmo();
+		}
+
+		// if(PlayerCharacter->GetWeapon())
+		// {
+		// 	if(CarriedAmmoMap.Contains(PlayerCharacter->GetWeapon()->GetWeaponType()))
+		// 	{
+		// 		CarriedAmmo = CarriedAmmoMap[PlayerCharacter->GetWeapon()->GetWeaponType()];
+		// 	}
+		// }
+
+		CarriedAmmo = StartingARAmmo;
+		
+		Controller = Controller == nullptr ? Cast<AGhostPlayerController>(PlayerCharacter->Controller) : Controller;
+		if(Controller)
+		{
+			Controller->SetHUDCarriedAmmo(CarriedAmmo);
+		}
 	}
+	
 }
 
 void UPlayerCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -44,7 +71,7 @@ void UPlayerCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 
 void UPlayerCombatComponent::Fire()
 {
-	if (bCanFire)
+	if (CanFire())
 	{
 		bCanFire = false;
 		ServerFire(HitTarget);
@@ -232,4 +259,28 @@ void UPlayerCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitResult)
 			);
 		}
 	}
+
+}
+
+bool UPlayerCombatComponent::CanFire()
+{
+	if(PlayerCharacter && PlayerCharacter->GetWeapon())
+	{
+		return !PlayerCharacter->GetWeapon()->IsEmpty() || !bCanFire;
+	}
+	return false;
+}
+
+void UPlayerCombatComponent::OnRep_CarriedAmmo()
+{
+	Controller = Controller == nullptr ? Cast<AGhostPlayerController>(Controller) : Controller;
+	if(Controller)
+	{
+		Controller->SetHUDCarriedAmmo(CarriedAmmo);
+	}
+}
+
+void UPlayerCombatComponent::InitializeCarriedAmmo()
+{
+	CarriedAmmoMap.Emplace(EWeaponTypes::EWT_AssaultRifle, StartingARAmmo);
 }

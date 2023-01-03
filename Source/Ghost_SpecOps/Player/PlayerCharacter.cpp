@@ -11,6 +11,8 @@
 
 APlayerCharacter::APlayerCharacter()
 {
+	Tags.Add("Keycard");
+	
 	SpringArmComponent = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
 	SpringArmComponent->SetupAttachment(GetMesh());
 	SpringArmComponent->TargetArmLength = 600.f;

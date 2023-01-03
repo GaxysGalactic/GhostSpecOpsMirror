@@ -355,14 +355,13 @@ void UPlayerCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitResult)
 		}
 		else
 		{
-			// HitTarget = TraceHitResult.ImpactPoint;
-			DrawDebugSphere(
-				GetWorld(),
-				TraceHitResult.ImpactPoint,
-				12.f,
-				12,
-				FColor::Red
-			);
+			// DrawDebugSphere(
+			// 	GetWorld(),
+			// 	TraceHitResult.ImpactPoint,
+			// 	12.f,
+			// 	12,
+			// 	FColor::Red
+			// );
 		}
 	}
 

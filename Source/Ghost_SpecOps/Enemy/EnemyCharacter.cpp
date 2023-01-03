@@ -76,10 +76,13 @@ void AEnemyCharacter::BeginPlay()
 void AEnemyCharacter::Tick(float DeltaSeconds)
 {
 	const APlayerCharacter* Player =  Cast<APlayerCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
-	const FVector PlayerLocation = Player->GetFollowCamera()->GetComponentLocation();
-	const FRotator Rotator = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), PlayerLocation);
+	if(Player)
+	{
+		const FVector PlayerLocation = Player->GetFollowCamera()->GetComponentLocation();
+		const FRotator Rotator = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), PlayerLocation);
 	
-	WidgetComponent->SetWorldRotation(Rotator);
+		WidgetComponent->SetWorldRotation(Rotator);	
+	}
 	
 	Super::Tick(DeltaSeconds);
 }
